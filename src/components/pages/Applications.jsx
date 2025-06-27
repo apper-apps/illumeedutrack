@@ -189,25 +189,45 @@ const columns = [
       key: 'student', 
       label: 'Student', 
       sortable: true,
-      render: (value) => value?.Name || value || 'N/A'
+      render: (value) => {
+        if (value && typeof value === 'object' && value.Name) {
+          return value.Name;
+        }
+        return value || 'N/A';
+      }
     },
     { 
       key: 'campus', 
       label: 'Campus', 
       sortable: true,
-      render: (value) => value?.Name || value || 'N/A'
+      render: (value) => {
+        if (value && typeof value === 'object' && value.Name) {
+          return value.Name;
+        }
+        return value || 'N/A';
+      }
     },
     { 
       key: 'agent', 
       label: 'Agent', 
       sortable: true,
-      render: (value) => value?.Name || value || 'N/A'
+      render: (value) => {
+        if (value && typeof value === 'object' && value.Name) {
+          return value.Name;
+        }
+        return value || 'N/A';
+      }
     },
     { 
       key: 'marketer', 
       label: 'Marketer', 
       sortable: true,
-      render: (value) => value?.Name || value || 'N/A'
+      render: (value) => {
+        if (value && typeof value === 'object' && value.Name) {
+          return value.Name;
+        }
+        return value || 'N/A';
+      }
     },
     { key: 'offerStatus', label: 'Offer Status', sortable: true, type: 'status', statusType: 'offer' },
     { key: 'gsStatus', label: 'GS Status', sortable: true, type: 'status', statusType: 'gs' },
