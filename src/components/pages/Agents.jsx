@@ -41,14 +41,14 @@ const Agents = () => {
     }
   };
 
-  const handleEdit = (agent) => {
-    toast.info(`Edit functionality for ${agent.name} will be implemented`);
+const handleEdit = (agent) => {
+    toast.info(`Edit functionality for ${agent?.Name || agent?.name || 'agent'} will be implemented`);
   };
 
   const handleDelete = async (agent) => {
-    if (window.confirm(`Are you sure you want to delete ${agent.name}?`)) {
+    if (window.confirm(`Are you sure you want to delete ${agent?.Name || agent?.name || 'this agent'}?`)) {
       try {
-        await agentService.delete(agent.Id);
+        await agentService.delete(agent?.Id);
         toast.success('Agent deleted successfully');
         loadData();
       } catch (err) {
@@ -128,10 +128,10 @@ const Agents = () => {
             >
               <DataTable
                 columns={agentColumns}
-                data={agents.map(agent => ({
+data={agents?.map(agent => ({
                   ...agent,
-                  active: agent.active ? 'Active' : 'Inactive'
-                }))}
+                  active: agent?.active ? 'Active' : 'Inactive'
+                })) || []}
                 loading={loading}
                 onEdit={handleEdit}
                 onDelete={handleDelete}

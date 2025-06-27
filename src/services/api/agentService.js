@@ -17,7 +17,11 @@ const agentService = {
         ]
       };
       
-      const response = await apperClient.fetchRecords('agent', params);
+const response = await apperClient.fetchRecords('agent', params);
+      
+      if (!response || !response.success) {
+        throw new Error(response?.message || 'Failed to fetch agents');
+      }
       
       if (!response.success) {
         console.error(response.message);
@@ -47,7 +51,11 @@ const agentService = {
         ]
       };
       
-      const response = await apperClient.getRecordById('agent', agentId, params);
+const response = await apperClient.getRecordById('agent', agentId, params);
+      
+      if (!response || !response.success) {
+        throw new Error(response?.message || 'Failed to fetch agent');
+      }
       
       if (!response.success) {
         console.error(response.message);

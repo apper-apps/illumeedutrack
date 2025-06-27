@@ -46,7 +46,7 @@ setDashboardData({
 const statCards = [
     {
       title: 'Total Applications',
-      value: dashboardData.stats?.totalApplications || 0,
+      value: dashboardData?.stats?.totalApplications || 0,
       icon: 'FileText',
       color: 'primary',
       trend: 'up',
@@ -54,7 +54,7 @@ const statCards = [
     },
     {
       title: 'Offers Issued',
-      value: dashboardData.stats?.offersIssued || 0,
+      value: dashboardData?.stats?.offersIssued || 0,
       icon: 'CheckCircle',
       color: 'success',
       trend: 'up',
@@ -62,7 +62,7 @@ const statCards = [
     },
     {
       title: 'COE Issued',
-      value: dashboardData.stats?.coeIssued || 0,
+      value: dashboardData?.stats?.coeIssued || 0,
       icon: 'Award',
       color: 'accent',
       trend: 'up',
@@ -70,7 +70,7 @@ const statCards = [
     },
     {
       title: 'Total Collection',
-      value: `$${(dashboardData.stats?.totalCollection || 0).toLocaleString()}`,
+      value: `$${(dashboardData?.stats?.totalCollection || 0).toLocaleString()}`,
       icon: 'DollarSign',
       color: 'warning',
       trend: 'up',
@@ -78,14 +78,14 @@ const statCards = [
     }
   ];
 
-  const marketerStats = dashboardData.marketerPerformance.slice(0, 3).map((perf, index) => ({
-    title: perf.marketer?.Name || 'Unknown Marketer',
-    value: `${perf.totalOffers || 0} offers`,
+  const marketerStats = (dashboardData?.marketerPerformance || []).slice(0, 3).map((perf, index) => ({
+    title: perf?.marketer?.Name || 'Unknown Marketer',
+    value: `${perf?.totalOffers || 0} offers`,
     icon: 'Megaphone',
     color: index === 0 ? 'primary' : index === 1 ? 'success' : 'accent',
     trend: 'up',
     trendValue: Math.random() * 20 + 5,
-    subtitle: `${perf.totalCoes || 0} COEs, $${(perf.totalCollections || 0).toLocaleString()}`
+    subtitle: `${perf?.totalCoes || 0} COEs, $${(perf?.totalCollections || 0).toLocaleString()}`
   }));
 
   if (loading) {
@@ -152,9 +152,9 @@ return (
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((card, index) => (
+        {statCards?.map((card, index) => (
           <motion.div
-            key={card.title}
+            key={card?.title}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -165,7 +165,7 @@ return (
       </div>
 
       {/* Marketer Performance Cards */}
-      {marketerStats.length > 0 && (
+      {marketerStats?.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -173,9 +173,9 @@ return (
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Marketer Performance</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {marketerStats.map((card, index) => (
+            {marketerStats?.map((card, index) => (
               <motion.div
-                key={card.title}
+                key={card?.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + index * 0.1 }}
@@ -195,7 +195,7 @@ return (
       >
         <ChartContainer
           title="Application Trends"
-          data={dashboardData.chartData}
+          data={dashboardData?.chartData || []}
           showPeriodToggle={true}
         />
       </motion.div>

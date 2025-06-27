@@ -36,7 +36,11 @@ const applicationService = {
         ]
       };
       
-      const response = await apperClient.fetchRecords('application', params);
+const response = await apperClient.fetchRecords('application', params);
+      
+      if (!response || !response.success) {
+        throw new Error(response?.message || 'Failed to fetch applications');
+      }
       
       if (!response.success) {
         console.error(response.message);

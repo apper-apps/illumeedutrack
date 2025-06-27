@@ -157,9 +157,8 @@ const handleAddApplication = () => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setFormLoading(true);
-
 try {
-      if (showEditModal && selectedStudent) {
+      if (showEditModal && selectedStudent?.Id) {
         await applicationService.update(selectedStudent.Id, formData);
         toast.success('Application updated successfully');
       } else {
@@ -190,7 +189,7 @@ const columns = [
       label: 'Student', 
       sortable: true,
       render: (value) => {
-        if (value && typeof value === 'object' && value.Name) {
+        if (value && typeof value === 'object' && value?.Name) {
           return value.Name;
         }
         return value || 'N/A';
@@ -201,7 +200,7 @@ const columns = [
       label: 'Campus', 
       sortable: true,
       render: (value) => {
-        if (value && typeof value === 'object' && value.Name) {
+        if (value && typeof value === 'object' && value?.Name) {
           return value.Name;
         }
         return value || 'N/A';
@@ -212,7 +211,7 @@ const columns = [
       label: 'Agent', 
       sortable: true,
       render: (value) => {
-        if (value && typeof value === 'object' && value.Name) {
+        if (value && typeof value === 'object' && value?.Name) {
           return value.Name;
         }
         return value || 'N/A';
@@ -223,7 +222,7 @@ const columns = [
       label: 'Marketer', 
       sortable: true,
       render: (value) => {
-        if (value && typeof value === 'object' && value.Name) {
+        if (value && typeof value === 'object' && value?.Name) {
           return value.Name;
         }
         return value || 'N/A';
