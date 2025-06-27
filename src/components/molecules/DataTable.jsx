@@ -157,11 +157,11 @@ const DataTable = ({
                     className="rounded border-gray-300 text-primary focus:ring-primary"
                   />
                 </td>
-                {columns.map((column) => (
+{columns.map((column) => (
                   <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatCellValue(row[column.key], column)}
+                    {row ? formatCellValue(row[column.key], column) : ''}
                   </td>
-))}
+                ))}
                 {actions && (onEdit || onDelete) && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
