@@ -1,9 +1,10 @@
-import { createContext, useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import { store } from './store/store';
-import { ToastContainer } from 'react-toastify';
-import AppRoutes from './AppRoutes';
+import React, { createContext, useEffect, useState } from "react";
+import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { Provider, useDispatch } from "react-redux";
+import { ToastContainer } from "react-toastify";
+import AppRoutes from "@/AppRoutes";
+import { store } from "@/store/store";
+import { setUser, clearUser } from "@/store/userSlice";
 
 export const AuthContext = createContext(null);
 
@@ -19,9 +20,10 @@ function App() {
 
 function AppContent() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     const { ApperClient, ApperUI } = window.ApperSDK;
     
     const client = new ApperClient({
@@ -53,7 +55,7 @@ function AppContent() {
           } else {
             navigate('/');
           }
-          store.dispatch({ type: 'user/setUser', payload: JSON.parse(JSON.stringify(user)) });
+          dispatch(setUser(JSON.parse(JSON.stringify(user))));
         } else {
           if (!isAuthPage) {
             navigate(
@@ -76,14 +78,14 @@ function AppContent() {
           } else {
             navigate('/login');
           }
-          store.dispatch({ type: 'user/clearUser' });
+          dispatch(clearUser());
         }
       },
       onError: function(error) {
         console.error("Authentication failed:", error);
       }
     });
-  }, [navigate]);
+  }, [navigate, dispatch]);
 
   const authMethods = {
     isInitialized,
