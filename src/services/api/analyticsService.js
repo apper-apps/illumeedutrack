@@ -107,6 +107,55 @@ const analyticsService = {
       }
     });
 
+return Object.values(marketerStats).map(stats => ({
+      ...stats,
+      conversionRate: stats.applications > 0 ? (stats.offersIssued / stats.applications * 100).toFixed(1) : '0.0'
+    }));
+  },
+
+  async getMarketerPerformanceByFilters(filters = {}) {
+    await delay(350);
+    const students = await studentService.getAll();
+    let filteredStudents = [...students];
+
+    // Apply filters
+    if (filters.campus) {
+      filteredStudents = filteredStudents.filter(s => s.campus === filters.campus);
+    }
+    if (filters.course) {
+      filteredStudents = filteredStudents.filter(s => s.course === filters.course);
+    }
+    if (filters.intake) {
+      filteredStudents = filteredStudents.filter(s => s.intake === filters.intake);
+    }
+
+    const marketerStats = {};
+
+    filteredStudents.forEach(student => {
+      const marketerName = student.marketerName;
+      if (!marketerStats[marketerName]) {
+        marketerStats[marketerName] = {
+          marketer: marketerName,
+          applications: 0,
+          offersIssued: 0,
+          coeIssued: 0,
+          totalAmount: 0,
+          campus: filters.campus || 'All',
+          course: filters.course || 'All',
+          intake: filters.intake || 'All'
+        };
+      }
+
+      marketerStats[marketerName].applications++;
+      if (student.offerStatus === 'Issued') {
+        marketerStats[marketerName].offersIssued++;
+        marketerStats[marketerName].totalAmount += student.amount;
+      }
+      if (student.coeStatus === 'Issued') {
+        marketerStats[marketerName].coeIssued++;
+      }
+    });
+
     return Object.values(marketerStats).map(stats => ({
       ...stats,
       conversionRate: stats.applications > 0 ? (stats.offersIssued / stats.applications * 100).toFixed(1) : '0.0'

@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import ChartContainer from '@/components/organisms/ChartContainer';
-import PerformanceTable from '@/components/organisms/PerformanceTable';
-import Button from '@/components/atoms/Button';
-import analyticsService from '@/services/api/analyticsService';
-import { toast } from 'react-toastify';
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+import analyticsService from "@/services/api/analyticsService";
+import Applications from "@/components/pages/Applications";
+import Dashboard from "@/components/pages/Dashboard";
+import ChartContainer from "@/components/organisms/ChartContainer";
+import PerformanceTable from "@/components/organisms/PerformanceTable";
+import Button from "@/components/atoms/Button";
 
 const Analytics = () => {
   const [analyticsData, setAnalyticsData] = useState({
@@ -13,10 +15,11 @@ const Analytics = () => {
     agentPerformance: [],
     marketerPerformance: []
   });
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState('monthly');
-
+  const [marketerFilters, setMarketerFilters] = useState({});
+  const [filteredMarketerPerformance, setFilteredMarketerPerformance] = useState([]);
   useEffect(() => {
     loadAnalyticsData();
   }, []);
@@ -119,7 +122,7 @@ const Analytics = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <PerformanceTable
+<PerformanceTable
             title="Marketer Performance"
             data={analyticsData.marketerPerformance}
             type="marketer"
@@ -128,6 +131,106 @@ const Analytics = () => {
         </motion.div>
       </div>
 
+      {/* Marketer Performance Filters */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        className="bg-white rounded-lg p-6 shadow-card"
+      >
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Marketer Performance Filters</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <select
+            value={marketerFilters.campus || ''}
+            onChange={(e) => setMarketerFilters({...marketerFilters, campus: e.target.value})}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">All Campuses</option>
+            <option value="Kathmandu">Kathmandu</option>
+            <option value="Chitwan">Chitwan</option>
+          </select>
+          <select
+            value={marketerFilters.course || ''}
+            onChange={(e) => setMarketerFilters({...marketerFilters, course: e.target.value})}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">All Courses</option>
+            <option value="BBA">BBA</option>
+            <option value="MBA">MBA</option>
+          </select>
+          <select
+            value={marketerFilters.intake || ''}
+            onChange={(e) => setMarketerFilters({...marketerFilters, intake: e.target.value})}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">All Intakes</option>
+            <option value="July">July</option>
+            <option value="November">November</option>
+          </select>
+          <Button 
+            onClick={async () => {
+              try {
+                const filtered = await analyticsService.getMarketerPerformanceByFilters(marketerFilters);
+                setFilteredMarketerPerformance(filtered);
+                toast.success('Marketer performance filtered successfully');
+              } catch (err) {
+                toast.error('Failed to filter marketer performance');
+              }
+            }}
+            icon="Filter"
+          >
+            Apply Filters
+          </Button>
+        </div>
+        {(marketerFilters.campus || marketerFilters.course || marketerFilters.intake) && (
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-sm text-gray-600">Active filters:</span>
+            {marketerFilters.campus && (
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                Campus: {marketerFilters.campus}
+              </span>
+            )}
+            {marketerFilters.course && (
+              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                Course: {marketerFilters.course}
+              </span>
+            )}
+            {marketerFilters.intake && (
+              <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
+                Intake: {marketerFilters.intake}
+              </span>
+            )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => {
+                setMarketerFilters({});
+                setFilteredMarketerPerformance([]);
+                toast.info('Marketer filters cleared');
+              }}
+              icon="X"
+            >
+              Clear
+            </Button>
+          </div>
+        )}
+</motion.div>
+
+      {/* Filtered Marketer Performance Table */}
+      {filteredMarketerPerformance.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <PerformanceTable
+            title="Marketer Performance (Filtered)"
+            data={filteredMarketerPerformance}
+            type="marketer"
+            loading={loading}
+          />
+        </motion.div>
+      )}
       {/* Additional Insights */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -172,14 +275,11 @@ const Analytics = () => {
         className="bg-white rounded-lg p-6 shadow-card"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Export Data</h3>
-        <div className="flex gap-4">
+<div className="flex gap-4">
           <Button icon="Download" onClick={() => toast.info('Export to CSV functionality will be implemented')}>
             Export to CSV
           </Button>
-          <Button variant="secondary" icon="FileText" onClick={() => toast.info('Generate report functionality will be implemented')}>
-            Generate Report
-          </Button>
-          <Button variant="accent" icon="Mail" onClick={() => toast.info('Email report functionality will be implemented')}>
+          <Button icon="Mail" onClick={() => toast.info('Email report functionality will be implemented')}>
             Email Report
           </Button>
         </div>

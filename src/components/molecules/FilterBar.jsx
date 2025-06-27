@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import Button from '@/components/atoms/Button';
-import Select from '@/components/atoms/Select';
-import Input from '@/components/atoms/Input';
-import ApperIcon from '@/components/ApperIcon';
+import React, { useState } from "react";
+import ApperIcon from "@/components/ApperIcon";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
 
 const FilterBar = ({ 
   filters, 
@@ -108,7 +108,7 @@ const FilterBar = ({
             value={filters.gsStatus || ''}
             onChange={(e) => handleFilterChange('gsStatus', e.target.value)}
           />
-          <Select
+<Select
             placeholder="COE Status"
             options={statusOptions.coe || []}
             value={filters.coeStatus || ''}
@@ -119,6 +119,12 @@ const FilterBar = ({
             options={marketerOptions}
             value={filters.marketer || ''}
             onChange={(e) => handleFilterChange('marketer', e.target.value)}
+          />
+          <Select
+            placeholder="Visa Status"
+            options={statusOptions.visa || []}
+            value={filters.visaStatus || ''}
+            onChange={(e) => handleFilterChange('visaStatus', e.target.value)}
           />
         </div>
       )}

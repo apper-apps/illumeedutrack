@@ -102,10 +102,11 @@ const Applications = () => {
     { key: 'agentName', label: 'Agent', sortable: true },
     { key: 'intake', label: 'Intake', sortable: true },
     { key: 'location', label: 'Location', sortable: true },
-    { key: 'offerStatus', label: 'Offer Status', sortable: true, type: 'status', statusType: 'offer' },
+{ key: 'offerStatus', label: 'Offer Status', sortable: true, type: 'status', statusType: 'offer' },
     { key: 'gsStatus', label: 'GS Status', sortable: true, type: 'status', statusType: 'gs' },
     { key: 'amount', label: 'Amount', sortable: true, type: 'currency' },
     { key: 'coeStatus', label: 'COE Status', sortable: true, type: 'status', statusType: 'coe' },
+    { key: 'visaStatus', label: 'Visa Status', sortable: true, type: 'status', statusType: 'visa' },
     { key: 'marketerName', label: 'Marketer', sortable: true },
     { key: 'remarks', label: 'Remarks', sortable: false }
   ];
@@ -139,10 +140,15 @@ const Applications = () => {
         { value: 'Pending', label: 'Pending' },
         { value: 'Declined', label: 'Declined' }
       ],
-      coe: [
+coe: [
         { value: 'Issued', label: 'Issued' },
         { value: 'Pending', label: 'Pending' },
         { value: 'Release Required', label: 'Release Required' }
+      ],
+      visa: [
+        { value: 'Approved', label: 'Approved' },
+        { value: 'Pending', label: 'Pending' },
+        { value: 'Declined', label: 'Declined' }
       ]
     },
     marketerOptions: [

@@ -81,11 +81,14 @@ const studentService = {
     if (filters.offerStatus) {
       filtered = filtered.filter(s => s.offerStatus === filters.offerStatus);
     }
-    if (filters.gsStatus) {
+if (filters.gsStatus) {
       filtered = filtered.filter(s => s.gsStatus === filters.gsStatus);
     }
     if (filters.coeStatus) {
       filtered = filtered.filter(s => s.coeStatus === filters.coeStatus);
+    }
+    if (filters.visaStatus) {
+      filtered = filtered.filter(s => s.visaStatus === filters.visaStatus);
     }
     if (filters.marketer) {
       filtered = filtered.filter(s => s.marketerName === filters.marketer);

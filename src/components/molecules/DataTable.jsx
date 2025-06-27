@@ -161,8 +161,8 @@ const DataTable = ({
                   <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {formatCellValue(row[column.key], column)}
                   </td>
-                ))}
-                {actions && (
+))}
+                {actions && (onEdit || onDelete) && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
                       {onEdit && (
@@ -172,6 +172,7 @@ const DataTable = ({
                           icon="Edit"
                           onClick={() => onEdit(row)}
                           className="text-gray-600 hover:text-primary"
+                          title="Edit"
                         />
                       )}
                       {onDelete && (
@@ -181,6 +182,7 @@ const DataTable = ({
                           icon="Trash2"
                           onClick={() => onDelete(row)}
                           className="text-gray-600 hover:text-error"
+                          title="Delete"
                         />
                       )}
                     </div>
