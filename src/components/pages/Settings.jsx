@@ -113,10 +113,10 @@ const tabs = [
 
   const renderCampusForm = () => (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
+<Input
         label="Campus Name"
-        value={formData.name || ''}
-        onChange={(e) => setFormData({...formData, name: e.target.value})}
+        value={formData.Name || formData.name || ''}
+        onChange={(e) => setFormData({...formData, Name: e.target.value, name: e.target.value})}
         required
       />
       <Input
@@ -140,10 +140,10 @@ const tabs = [
 
   const renderAgentForm = () => (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
+<Input
         label="Agent Name"
-        value={formData.name || ''}
-        onChange={(e) => setFormData({...formData, name: e.target.value})}
+        value={formData.Name || formData.name || ''}
+        onChange={(e) => setFormData({...formData, Name: e.target.value, name: e.target.value})}
         required
       />
       <Input
@@ -233,10 +233,10 @@ const tabs = [
 
   const renderMarketerForm = () => (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
+<Input
         label="Marketer Name"
-        value={formData.name || ''}
-        onChange={(e) => setFormData({...formData, name: e.target.value})}
+        value={formData.Name || formData.name || ''}
+        onChange={(e) => setFormData({...formData, Name: e.target.value, name: e.target.value})}
         required
       />
       <Input
@@ -345,10 +345,10 @@ const tabs = [
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Existing Campuses</h3>
                   <div className="space-y-2">
-                    {campuses.map((campus) => (
+{campuses.map((campus) => (
                       <div key={campus.Id} className="flex justify-between items-center p-3 border rounded-lg">
                         <div>
-                          <div className="font-medium">{campus.name}</div>
+                          <div className="font-medium">{campus.Name || campus.name}</div>
                           <div className="text-sm text-gray-500">{campus.location}</div>
                         </div>
                         <div className="flex gap-2">
@@ -392,10 +392,10 @@ const tabs = [
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Existing Agents</h3>
                   <div className="space-y-2">
-                    {agents.map((agent) => (
+{agents.map((agent) => (
                       <div key={agent.Id} className="flex justify-between items-center p-3 border rounded-lg">
                         <div>
-                          <div className="font-medium">{agent.name}</div>
+                          <div className="font-medium">{agent.Name || agent.name}</div>
                           <div className="text-sm text-gray-500">{agent.email}</div>
                           <div className="text-xs text-gray-400">{agent.phone}</div>
                         </div>
@@ -440,10 +440,10 @@ const tabs = [
             <div>
               <h3 className="text-lg font-semibold mb-4">Existing Marketers</h3>
               <div className="space-y-2">
-                {marketers.map((marketer) => (
+{marketers.map((marketer) => (
                   <div key={marketer.Id} className="flex justify-between items-center p-3 border rounded-lg">
                     <div>
-                      <div className="font-medium">{marketer.name}</div>
+                      <div className="font-medium">{marketer.Name || marketer.name}</div>
                       <div className="text-sm text-gray-500">{marketer.email}</div>
                       <div className="text-xs text-gray-400">{marketer.company} • {marketer.specialization}</div>
                       <div className="text-xs text-gray-400">{marketer.phone}</div>

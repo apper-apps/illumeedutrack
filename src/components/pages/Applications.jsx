@@ -93,21 +93,35 @@ const Applications = () => {
       }
     }
   };
-
-  const columns = [
+const columns = [
     { key: 'Id', label: 'S.N', sortable: true },
-    { key: 'name', label: 'Student Name', sortable: true },
-    { key: 'campus', label: 'Campus', sortable: true },
+    { key: 'Name', label: 'Student Name', sortable: true },
+    { 
+      key: 'campus', 
+      label: 'Campus', 
+      sortable: true,
+      render: (value) => value?.Name || value || 'N/A'
+    },
     { key: 'course', label: 'Course', sortable: true },
-    { key: 'agentName', label: 'Agent', sortable: true },
+    { 
+      key: 'agent_name', 
+      label: 'Agent', 
+      sortable: true,
+      render: (value) => value?.Name || value || 'N/A'
+    },
     { key: 'intake', label: 'Intake', sortable: true },
     { key: 'location', label: 'Location', sortable: true },
-{ key: 'offerStatus', label: 'Offer Status', sortable: true, type: 'status', statusType: 'offer' },
-    { key: 'gsStatus', label: 'GS Status', sortable: true, type: 'status', statusType: 'gs' },
+    { key: 'offer_status', label: 'Offer Status', sortable: true, type: 'status', statusType: 'offer' },
+    { key: 'gs_status', label: 'GS Status', sortable: true, type: 'status', statusType: 'gs' },
     { key: 'amount', label: 'Amount', sortable: true, type: 'currency' },
-    { key: 'coeStatus', label: 'COE Status', sortable: true, type: 'status', statusType: 'coe' },
-    { key: 'visaStatus', label: 'Visa Status', sortable: true, type: 'status', statusType: 'visa' },
-    { key: 'marketerName', label: 'Marketer', sortable: true },
+    { key: 'coe_status', label: 'COE Status', sortable: true, type: 'status', statusType: 'coe' },
+    { key: 'visa_status', label: 'Visa Status', sortable: true, type: 'status', statusType: 'visa' },
+    { 
+      key: 'marketer_name', 
+      label: 'Marketer', 
+      sortable: true,
+      render: (value) => value?.Name || value || 'N/A'
+    },
     { key: 'remarks', label: 'Remarks', sortable: false }
   ];
 
@@ -230,21 +244,21 @@ coe: [
               <div className="text-2xl font-bold text-primary">{students.length}</div>
               <div className="text-sm text-gray-500">Total Applications</div>
             </div>
-            <div className="text-center">
+<div className="text-center">
               <div className="text-2xl font-bold text-success">
-                {students.filter(s => s.offerStatus === 'Issued').length}
+                {students.filter(s => s.offer_status === 'Issued').length}
               </div>
               <div className="text-sm text-gray-500">Offers Issued</div>
             </div>
-            <div className="text-center">
+<div className="text-center">
               <div className="text-2xl font-bold text-accent">
-                {students.filter(s => s.coeStatus === 'Issued').length}
+                {students.filter(s => s.coe_status === 'Issued').length}
               </div>
               <div className="text-sm text-gray-500">COE Issued</div>
             </div>
-            <div className="text-center">
+<div className="text-center">
               <div className="text-2xl font-bold text-warning">
-                ${students.filter(s => s.offerStatus === 'Issued').reduce((sum, s) => sum + s.amount, 0).toLocaleString()}
+                ${students.filter(s => s.offer_status === 'Issued').reduce((sum, s) => sum + (s.amount || 0), 0).toLocaleString()}
               </div>
               <div className="text-sm text-gray-500">Total Collection</div>
             </div>

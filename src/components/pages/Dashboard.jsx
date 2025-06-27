@@ -65,7 +65,7 @@ const Dashboard = () => {
       trendValue: 15.7
     },
     {
-      title: 'Total Collection',
+title: 'Total Collection',
       value: dashboardData.stats?.totalCollection || 0,
       icon: 'DollarSign',
       color: 'warning',

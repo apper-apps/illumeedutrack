@@ -1,12 +1,17 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import ApperIcon from '@/components/ApperIcon';
 import { routeArray } from '@/config/routes';
+import { AuthContext } from './App';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const location = useLocation();
+  const { logout } = useContext(AuthContext);
+  const { user } = useSelector((state) => state.user);
 
   const currentRoute = routeArray.find(route => route.path === location.pathname) || routeArray[0];
 
@@ -28,13 +33,49 @@ const Layout = () => {
             <h1 className="text-xl font-bold text-gray-900">EduTrack Pro</h1>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+<div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
             <ApperIcon name={currentRoute.icon} size={16} />
             <span>{currentRoute.label}</span>
           </div>
-          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-            <ApperIcon name="User" size={16} className="text-gray-600" />
+          <div className="relative">
+            <button
+              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+              className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                <ApperIcon name="User" size={16} className="text-white" />
+              </div>
+              <div className="hidden md:block text-left">
+                <div className="text-sm font-medium text-gray-900">
+                  {user?.firstName || 'User'} {user?.lastName || ''}
+                </div>
+                <div className="text-xs text-gray-500">{user?.emailAddress || 'user@example.com'}</div>
+              </div>
+              <ApperIcon name="ChevronDown" size={16} className="text-gray-400" />
+            </button>
+            
+            <AnimatePresence>
+              {userDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                >
+                  <button
+                    onClick={() => {
+                      logout();
+                      setUserDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <ApperIcon name="LogOut" size={16} />
+                    Logout
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </header>

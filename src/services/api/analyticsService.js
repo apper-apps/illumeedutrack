@@ -1,165 +1,203 @@
-import analyticsData from '../mockData/analyticsData.json';
 import studentService from './studentService';
 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const { ApperClient } = window.ApperSDK;
+
+const apperClient = new ApperClient({
+  apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+  apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+});
 
 const analyticsService = {
   async getMonthlyData() {
-    await delay(400);
-    return [...analyticsData];
+    try {
+      const params = {
+        fields: [
+          { field: { Name: "period" } },
+          { field: { Name: "total_applications" } },
+          { field: { Name: "offers_issued" } },
+          { field: { Name: "coe_issued" } },
+          { field: { Name: "total_collection" } }
+        ]
+      };
+      
+      const response = await apperClient.fetchRecords('analytics_data', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching monthly analytics data:", error);
+      throw error;
+    }
   },
 
   async getWeeklyData() {
-    await delay(350);
-    // Generate weekly data based on monthly data
-    const weeklyData = [];
-    analyticsData.forEach(monthData => {
-      const weeksInMonth = 4;
-      for (let week = 1; week <= weeksInMonth; week++) {
-        weeklyData.push({
-          period: `${monthData.period}-W${week}`,
-          totalApplications: Math.floor(monthData.totalApplications / weeksInMonth) + (week === 1 ? monthData.totalApplications % weeksInMonth : 0),
-          offersIssued: Math.floor(monthData.offersIssued / weeksInMonth) + (week === 1 ? monthData.offersIssued % weeksInMonth : 0),
-          coeIssued: Math.floor(monthData.coeIssued / weeksInMonth) + (week === 1 ? monthData.coeIssued % weeksInMonth : 0),
-          totalCollection: Math.floor(monthData.totalCollection / weeksInMonth) + (week === 1 ? monthData.totalCollection % weeksInMonth : 0)
-        });
-      }
-    });
-    return weeklyData;
+    try {
+      const monthlyData = await this.getMonthlyData();
+      const weeklyData = [];
+      
+      monthlyData.forEach(monthData => {
+        const weeksInMonth = 4;
+        for (let week = 1; week <= weeksInMonth; week++) {
+          weeklyData.push({
+            period: `${monthData.period}-W${week}`,
+            totalApplications: Math.floor(monthData.total_applications / weeksInMonth) + 
+              (week === 1 ? monthData.total_applications % weeksInMonth : 0),
+            offersIssued: Math.floor(monthData.offers_issued / weeksInMonth) + 
+              (week === 1 ? monthData.offers_issued % weeksInMonth : 0),
+            coeIssued: Math.floor(monthData.coe_issued / weeksInMonth) + 
+              (week === 1 ? monthData.coe_issued % weeksInMonth : 0),
+            totalCollection: Math.floor(monthData.total_collection / weeksInMonth) + 
+              (week === 1 ? monthData.total_collection % weeksInMonth : 0)
+          });
+        }
+      });
+      
+      return weeklyData;
+    } catch (error) {
+      console.error("Error generating weekly analytics data:", error);
+      throw error;
+    }
   },
 
   async getDashboardStats() {
-    await delay(300);
-    const students = await studentService.getAll();
-    
-    const totalApplications = students.length;
-    const offersIssued = students.filter(s => s.offerStatus === 'Issued').length;
-    const coeIssued = students.filter(s => s.coeStatus === 'Issued').length;
-    const totalCollection = students
-      .filter(s => s.offerStatus === 'Issued')
-      .reduce((sum, s) => sum + s.amount, 0);
+    try {
+      const students = await studentService.getAll();
+      
+      const totalApplications = students.length;
+      const offersIssued = students.filter(s => s.offer_status === 'Issued').length;
+      const coeIssued = students.filter(s => s.coe_status === 'Issued').length;
+      const totalCollection = students
+        .filter(s => s.offer_status === 'Issued')
+        .reduce((sum, s) => sum + (s.amount || 0), 0);
 
-    return {
-      totalApplications,
-      offersIssued,
-      coeIssued,
-      totalCollection
-    };
+      return {
+        totalApplications,
+        offersIssued,
+        coeIssued,
+        totalCollection
+      };
+    } catch (error) {
+      console.error("Error calculating dashboard stats:", error);
+      throw error;
+    }
   },
 
   async getAgentPerformance() {
-    await delay(350);
-    const students = await studentService.getAll();
-    const agentStats = {};
+    try {
+      const students = await studentService.getAll();
+      const agentStats = {};
 
-    students.forEach(student => {
-      const agentName = student.agentName;
-      if (!agentStats[agentName]) {
-        agentStats[agentName] = {
-          agent: agentName,
-          applications: 0,
-          offersIssued: 0,
-          coeIssued: 0,
-          totalAmount: 0
-        };
-      }
+      students.forEach(student => {
+        const agentName = student.agent_name?.Name || student.agent_name || 'Unknown Agent';
+        if (!agentStats[agentName]) {
+          agentStats[agentName] = {
+            agent: agentName,
+            applications: 0,
+            offersIssued: 0,
+            coeIssued: 0,
+            totalAmount: 0
+          };
+        }
 
-      agentStats[agentName].applications++;
-      if (student.offerStatus === 'Issued') {
-        agentStats[agentName].offersIssued++;
-        agentStats[agentName].totalAmount += student.amount;
-      }
-      if (student.coeStatus === 'Issued') {
-        agentStats[agentName].coeIssued++;
-      }
-    });
+        agentStats[agentName].applications++;
+        if (student.offer_status === 'Issued') {
+          agentStats[agentName].offersIssued++;
+          agentStats[agentName].totalAmount += (student.amount || 0);
+        }
+        if (student.coe_status === 'Issued') {
+          agentStats[agentName].coeIssued++;
+        }
+      });
 
-    return Object.values(agentStats).map(stats => ({
-      ...stats,
-      conversionRate: stats.applications > 0 ? (stats.offersIssued / stats.applications * 100).toFixed(1) : '0.0'
-    }));
+      return Object.values(agentStats).map(stats => ({
+        ...stats,
+        conversionRate: stats.applications > 0 ? (stats.offersIssued / stats.applications * 100).toFixed(1) : '0.0'
+      }));
+    } catch (error) {
+      console.error("Error calculating agent performance:", error);
+      throw error;
+    }
   },
 
   async getMarketerPerformance() {
-    await delay(350);
-    const students = await studentService.getAll();
-    const marketerStats = {};
+    try {
+      const students = await studentService.getAll();
+      const marketerStats = {};
 
-    students.forEach(student => {
-      const marketerName = student.marketerName;
-      if (!marketerStats[marketerName]) {
-        marketerStats[marketerName] = {
-          marketer: marketerName,
-          applications: 0,
-          offersIssued: 0,
-          coeIssued: 0,
-          totalAmount: 0
-        };
-      }
+      students.forEach(student => {
+        const marketerName = student.marketer_name?.Name || student.marketer_name || 'Unknown Marketer';
+        if (!marketerStats[marketerName]) {
+          marketerStats[marketerName] = {
+            marketer: marketerName,
+            applications: 0,
+            offersIssued: 0,
+            coeIssued: 0,
+            totalAmount: 0
+          };
+        }
 
-      marketerStats[marketerName].applications++;
-      if (student.offerStatus === 'Issued') {
-        marketerStats[marketerName].offersIssued++;
-        marketerStats[marketerName].totalAmount += student.amount;
-      }
-      if (student.coeStatus === 'Issued') {
-        marketerStats[marketerName].coeIssued++;
-      }
-    });
+        marketerStats[marketerName].applications++;
+        if (student.offer_status === 'Issued') {
+          marketerStats[marketerName].offersIssued++;
+          marketerStats[marketerName].totalAmount += (student.amount || 0);
+        }
+        if (student.coe_status === 'Issued') {
+          marketerStats[marketerName].coeIssued++;
+        }
+      });
 
-return Object.values(marketerStats).map(stats => ({
-      ...stats,
-      conversionRate: stats.applications > 0 ? (stats.offersIssued / stats.applications * 100).toFixed(1) : '0.0'
-    }));
+      return Object.values(marketerStats).map(stats => ({
+        ...stats,
+        conversionRate: stats.applications > 0 ? (stats.offersIssued / stats.applications * 100).toFixed(1) : '0.0'
+      }));
+    } catch (error) {
+      console.error("Error calculating marketer performance:", error);
+      throw error;
+    }
   },
 
   async getMarketerPerformanceByFilters(filters = {}) {
-    await delay(350);
-    const students = await studentService.getAll();
-    let filteredStudents = [...students];
+    try {
+      const filteredStudents = await studentService.getFilteredData(filters);
+      const marketerStats = {};
 
-    // Apply filters
-    if (filters.campus) {
-      filteredStudents = filteredStudents.filter(s => s.campus === filters.campus);
+      filteredStudents.forEach(student => {
+        const marketerName = student.marketer_name?.Name || student.marketer_name || 'Unknown Marketer';
+        if (!marketerStats[marketerName]) {
+          marketerStats[marketerName] = {
+            marketer: marketerName,
+            applications: 0,
+            offersIssued: 0,
+            coeIssued: 0,
+            totalAmount: 0,
+            campus: filters.campus || 'All',
+            course: filters.course || 'All',
+            intake: filters.intake || 'All'
+          };
+        }
+
+        marketerStats[marketerName].applications++;
+        if (student.offer_status === 'Issued') {
+          marketerStats[marketerName].offersIssued++;
+          marketerStats[marketerName].totalAmount += (student.amount || 0);
+        }
+        if (student.coe_status === 'Issued') {
+          marketerStats[marketerName].coeIssued++;
+        }
+      });
+
+      return Object.values(marketerStats).map(stats => ({
+        ...stats,
+        conversionRate: stats.applications > 0 ? (stats.offersIssued / stats.applications * 100).toFixed(1) : '0.0'
+      }));
+    } catch (error) {
+      console.error("Error calculating filtered marketer performance:", error);
+      throw error;
     }
-    if (filters.course) {
-      filteredStudents = filteredStudents.filter(s => s.course === filters.course);
-    }
-    if (filters.intake) {
-      filteredStudents = filteredStudents.filter(s => s.intake === filters.intake);
-    }
-
-    const marketerStats = {};
-
-    filteredStudents.forEach(student => {
-      const marketerName = student.marketerName;
-      if (!marketerStats[marketerName]) {
-        marketerStats[marketerName] = {
-          marketer: marketerName,
-          applications: 0,
-          offersIssued: 0,
-          coeIssued: 0,
-          totalAmount: 0,
-          campus: filters.campus || 'All',
-          course: filters.course || 'All',
-          intake: filters.intake || 'All'
-        };
-      }
-
-      marketerStats[marketerName].applications++;
-      if (student.offerStatus === 'Issued') {
-        marketerStats[marketerName].offersIssued++;
-        marketerStats[marketerName].totalAmount += student.amount;
-      }
-      if (student.coeStatus === 'Issued') {
-        marketerStats[marketerName].coeIssued++;
-      }
-    });
-
-    return Object.values(marketerStats).map(stats => ({
-      ...stats,
-      conversionRate: stats.applications > 0 ? (stats.offersIssued / stats.applications * 100).toFixed(1) : '0.0'
-    }));
   }
 };
 

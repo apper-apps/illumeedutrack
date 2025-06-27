@@ -1,60 +1,174 @@
-import agentsData from '../mockData/agents.json';
+const { ApperClient } = window.ApperSDK;
 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-let agents = [...agentsData];
+const apperClient = new ApperClient({
+  apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+  apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+});
 
 const agentService = {
   async getAll() {
-    await delay(250);
-    return [...agents];
+    try {
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "email" } },
+          { field: { Name: "phone" } },
+          { field: { Name: "active" } }
+        ]
+      };
+      
+      const response = await apperClient.fetchRecords('agent', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching agents:", error);
+      throw error;
+    }
   },
 
   async getById(id) {
-    await delay(200);
-    const agent = agents.find(a => a.Id === parseInt(id, 10));
-    if (!agent) {
-      throw new Error('Agent not found');
+    try {
+      const agentId = parseInt(id);
+      if (isNaN(agentId)) {
+        throw new Error('Invalid agent ID');
+      }
+      
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "email" } },
+          { field: { Name: "phone" } },
+          { field: { Name: "active" } }
+        ]
+      };
+      
+      const response = await apperClient.getRecordById('agent', agentId, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching agent with ID ${id}:`, error);
+      throw error;
     }
-    return { ...agent };
   },
 
   async create(agentData) {
-    await delay(300);
-    const maxId = agents.length > 0 ? Math.max(...agents.map(a => a.Id)) : 0;
-    const newAgent = {
-      ...agentData,
-      Id: maxId + 1,
-      active: true
-    };
-    agents.push(newAgent);
-    return { ...newAgent };
+    try {
+      const params = {
+        records: [{
+          Name: agentData.name || agentData.Name,
+          email: agentData.email,
+          phone: agentData.phone,
+          active: agentData.active !== undefined ? agentData.active : true
+        }]
+      };
+      
+      const response = await apperClient.createRecord('agent', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const successfulRecords = response.results.filter(result => result.success);
+        const failedRecords = response.results.filter(result => !result.success);
+        
+        if (failedRecords.length > 0) {
+          console.error(`Failed to create ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          throw new Error('Failed to create agent');
+        }
+        
+        return successfulRecords[0]?.data;
+      }
+    } catch (error) {
+      console.error("Error creating agent:", error);
+      throw error;
+    }
   },
 
   async update(id, agentData) {
-    await delay(250);
-    const index = agents.findIndex(a => a.Id === parseInt(id, 10));
-    if (index === -1) {
-      throw new Error('Agent not found');
+    try {
+      const agentId = parseInt(id);
+      if (isNaN(agentId)) {
+        throw new Error('Invalid agent ID');
+      }
+      
+      const params = {
+        records: [{
+          Id: agentId,
+          Name: agentData.name || agentData.Name,
+          email: agentData.email,
+          phone: agentData.phone,
+          active: agentData.active
+        }]
+      };
+      
+      const response = await apperClient.updateRecord('agent', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const successfulUpdates = response.results.filter(result => result.success);
+        const failedUpdates = response.results.filter(result => !result.success);
+        
+        if (failedUpdates.length > 0) {
+          console.error(`Failed to update ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+          throw new Error('Failed to update agent');
+        }
+        
+        return successfulUpdates[0]?.data;
+      }
+    } catch (error) {
+      console.error("Error updating agent:", error);
+      throw error;
     }
-    
-    const updatedAgent = {
-      ...agents[index],
-      ...agentData,
-      Id: agents[index].Id // Preserve ID
-    };
-    agents[index] = updatedAgent;
-    return { ...updatedAgent };
   },
 
   async delete(id) {
-    await delay(200);
-    const index = agents.findIndex(a => a.Id === parseInt(id, 10));
-    if (index === -1) {
-      throw new Error('Agent not found');
+    try {
+      const agentId = parseInt(id);
+      if (isNaN(agentId)) {
+        throw new Error('Invalid agent ID');
+      }
+      
+      const params = {
+        RecordIds: [agentId]
+      };
+      
+      const response = await apperClient.deleteRecord('agent', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const failedDeletions = response.results.filter(result => !result.success);
+        
+        if (failedDeletions.length > 0) {
+          console.error(`Failed to delete ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+          throw new Error('Failed to delete agent');
+        }
+        
+        return true;
+      }
+    } catch (error) {
+      console.error("Error deleting agent:", error);
+      throw error;
     }
-    agents.splice(index, 1);
-    return true;
   }
 };
 

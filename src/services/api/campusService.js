@@ -1,59 +1,166 @@
-import campusesData from '../mockData/campuses.json';
+const { ApperClient } = window.ApperSDK;
 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-let campuses = [...campusesData];
+const apperClient = new ApperClient({
+  apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+  apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+});
 
 const campusService = {
   async getAll() {
-    await delay(200);
-    return [...campuses];
+    try {
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "location" } }
+        ]
+      };
+      
+      const response = await apperClient.fetchRecords('campus', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching campuses:", error);
+      throw error;
+    }
   },
 
   async getById(id) {
-    await delay(150);
-    const campus = campuses.find(c => c.Id === parseInt(id, 10));
-    if (!campus) {
-      throw new Error('Campus not found');
+    try {
+      const campusId = parseInt(id);
+      if (isNaN(campusId)) {
+        throw new Error('Invalid campus ID');
+      }
+      
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "location" } }
+        ]
+      };
+      
+      const response = await apperClient.getRecordById('campus', campusId, params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching campus with ID ${id}:`, error);
+      throw error;
     }
-    return { ...campus };
   },
 
   async create(campusData) {
-    await delay(250);
-    const maxId = campuses.length > 0 ? Math.max(...campuses.map(c => c.Id)) : 0;
-    const newCampus = {
-      ...campusData,
-      Id: maxId + 1
-    };
-    campuses.push(newCampus);
-    return { ...newCampus };
+    try {
+      const params = {
+        records: [{
+          Name: campusData.name || campusData.Name,
+          location: campusData.location
+        }]
+      };
+      
+      const response = await apperClient.createRecord('campus', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const successfulRecords = response.results.filter(result => result.success);
+        const failedRecords = response.results.filter(result => !result.success);
+        
+        if (failedRecords.length > 0) {
+          console.error(`Failed to create ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+          throw new Error('Failed to create campus');
+        }
+        
+        return successfulRecords[0]?.data;
+      }
+    } catch (error) {
+      console.error("Error creating campus:", error);
+      throw error;
+    }
   },
 
   async update(id, campusData) {
-    await delay(200);
-    const index = campuses.findIndex(c => c.Id === parseInt(id, 10));
-    if (index === -1) {
-      throw new Error('Campus not found');
+    try {
+      const campusId = parseInt(id);
+      if (isNaN(campusId)) {
+        throw new Error('Invalid campus ID');
+      }
+      
+      const params = {
+        records: [{
+          Id: campusId,
+          Name: campusData.name || campusData.Name,
+          location: campusData.location
+        }]
+      };
+      
+      const response = await apperClient.updateRecord('campus', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const successfulUpdates = response.results.filter(result => result.success);
+        const failedUpdates = response.results.filter(result => !result.success);
+        
+        if (failedUpdates.length > 0) {
+          console.error(`Failed to update ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
+          throw new Error('Failed to update campus');
+        }
+        
+        return successfulUpdates[0]?.data;
+      }
+    } catch (error) {
+      console.error("Error updating campus:", error);
+      throw error;
     }
-    
-    const updatedCampus = {
-      ...campuses[index],
-      ...campusData,
-      Id: campuses[index].Id // Preserve ID
-    };
-    campuses[index] = updatedCampus;
-    return { ...updatedCampus };
   },
 
   async delete(id) {
-    await delay(180);
-    const index = campuses.findIndex(c => c.Id === parseInt(id, 10));
-    if (index === -1) {
-      throw new Error('Campus not found');
+    try {
+      const campusId = parseInt(id);
+      if (isNaN(campusId)) {
+        throw new Error('Invalid campus ID');
+      }
+      
+      const params = {
+        RecordIds: [campusId]
+      };
+      
+      const response = await apperClient.deleteRecord('campus', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        throw new Error(response.message);
+      }
+      
+      if (response.results) {
+        const failedDeletions = response.results.filter(result => !result.success);
+        
+        if (failedDeletions.length > 0) {
+          console.error(`Failed to delete ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
+          throw new Error('Failed to delete campus');
+        }
+        
+        return true;
+      }
+    } catch (error) {
+      console.error("Error deleting campus:", error);
+      throw error;
     }
-    campuses.splice(index, 1);
-    return true;
   }
 };
 
