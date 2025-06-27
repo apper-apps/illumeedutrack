@@ -1,17 +1,20 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import DataTable from '@/components/molecules/DataTable';
-import FilterBar from '@/components/molecules/FilterBar';
-import Button from '@/components/atoms/Button';
-import Input from '@/components/atoms/Input';
-import Select from '@/components/atoms/Select';
-import studentService from '@/services/api/studentService';
-import agentService from '@/services/api/agentService';
-import campusService from '@/services/api/campusService';
-import marketerService from '@/services/api/marketerService';
-import { toast } from 'react-toastify';
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+import agentService from "@/services/api/agentService";
+import applicationService from "@/services/api/applicationService";
+import campusService from "@/services/api/campusService";
+import marketerService from "@/services/api/marketerService";
+import studentService from "@/services/api/studentService";
+import FilterBar from "@/components/molecules/FilterBar";
+import DataTable from "@/components/molecules/DataTable";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
+
 const Applications = () => {
-const [students, setStudents] = useState([]);
+const [applications, setApplications] = useState([]);
+  const [students, setStudents] = useState([]);
   const [agents, setAgents] = useState([]);
   const [campuses, setCampuses] = useState([]);
   const [marketers, setMarketers] = useState([]);
@@ -22,20 +25,18 @@ const [students, setStudents] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     Name: '',
-    course: '',
-    intake: '',
-    location: '',
-    offer_status: 'Pending',
-    gs_status: 'Pending',
-    visa_status: 'Pending',
-    amount: '',
-    coe_status: 'Pending',
-    remarks: '',
+    student: '',
     campus: '',
-    agent_name: '',
-    marketer_name: ''
+    agent: '',
+    marketer: '',
+    offerStatus: 'Pending',
+    gsStatus: 'Pending',
+    visaStatus: 'Pending',
+    coeStatus: 'Pending',
+    remarks: '',
+    amount: ''
   });
   const [formLoading, setFormLoading] = useState(false);
 
@@ -47,19 +48,21 @@ const [students, setStudents] = useState([]);
     applyFilters();
   }, [filters]);
 
-  const loadData = async () => {
+const loadData = async () => {
     setLoading(true);
     setError(null);
     
-try {
-      const [studentsData, agentsData, campusesData, marketersData] = await Promise.all([
+    try {
+      const [applicationsData, studentsData, agentsData, campusesData, marketersData] = await Promise.all([
+        applicationService.getAll(),
         studentService.getAll(),
         agentService.getAll(),
         campusService.getAll(),
         marketerService.getAll()
       ]);
       
-setStudents(studentsData);
+      setApplications(applicationsData);
+      setStudents(studentsData);
       setAgents(agentsData);
       setCampuses(campusesData);
       setMarketers(marketersData);
@@ -71,17 +74,16 @@ setStudents(studentsData);
     }
   };
 
-  const applyFilters = async () => {
+const applyFilters = async () => {
     if (Object.keys(filters).length === 0) return;
     
     try {
-      const filteredData = await studentService.getFilteredData(filters);
-      setStudents(filteredData);
+      const filteredData = await applicationService.getAll(); // Apply filters when implemented
+      setApplications(filteredData);
     } catch (err) {
       toast.error('Failed to apply filters');
     }
   };
-
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);
   };
@@ -91,9 +93,9 @@ setStudents(studentsData);
     loadData();
   };
 
-  const handleSort = (config) => {
+const handleSort = (config) => {
     setSortConfig(config);
-    const sortedData = [...students].sort((a, b) => {
+    const sortedData = [...applications].sort((a, b) => {
       const aVal = a[config.key];
       const bVal = b[config.key];
       
@@ -102,56 +104,52 @@ setStudents(studentsData);
       }
       return aVal < bVal ? 1 : -1;
     });
-    setStudents(sortedData);
+    setApplications(sortedData);
   };
 
-const handleEdit = (student) => {
-    setSelectedStudent(student);
+const handleEdit = (application) => {
+    setSelectedStudent(application);
     setFormData({
-      Name: student.Name || '',
-      course: student.course || '',
-      intake: student.intake || '',
-      location: student.location || '',
-      offer_status: student.offer_status || 'Pending',
-      gs_status: student.gs_status || 'Pending',
-      visa_status: student.visa_status || 'Pending',
-      amount: student.amount || '',
-      coe_status: student.coe_status || 'Pending',
-      remarks: student.remarks || '',
-      campus: student.campus?.Id || student.campus || '',
-      agent_name: student.agent_name?.Id || student.agent_name || '',
-      marketer_name: student.marketer_name?.Id || student.marketer_name || ''
+      Name: application.Name || '',
+      student: application.student?.Id || application.student || '',
+      campus: application.campus?.Id || application.campus || '',
+      agent: application.agent?.Id || application.agent || '',
+      marketer: application.marketer?.Id || application.marketer || '',
+      offerStatus: application.offerStatus || 'Pending',
+      gsStatus: application.gsStatus || 'Pending',
+      visaStatus: application.visaStatus || 'Pending',
+      coeStatus: application.coeStatus || 'Pending',
+      remarks: application.remarks || '',
+      amount: application.amount || ''
     });
     setShowEditModal(true);
   };
 
-  const handleDelete = async (student) => {
-    if (window.confirm(`Are you sure you want to delete ${student.Name}?`)) {
+const handleDelete = async (application) => {
+    if (window.confirm(`Are you sure you want to delete application ${application.Name}?`)) {
       try {
-        await studentService.delete(student.Id);
-        toast.success('Student deleted successfully');
+        await applicationService.delete(application.Id);
+        toast.success('Application deleted successfully');
         loadData();
       } catch (err) {
-        toast.error('Failed to delete student');
+        toast.error('Failed to delete application');
       }
     }
   };
 
-  const handleAddStudent = () => {
+const handleAddApplication = () => {
     setFormData({
       Name: '',
-      course: '',
-      intake: '',
-      location: '',
-      offer_status: 'Pending',
-      gs_status: 'Pending',
-      visa_status: 'Pending',
-      amount: '',
-      coe_status: 'Pending',
-      remarks: '',
+      student: '',
       campus: '',
-      agent_name: '',
-      marketer_name: ''
+      agent: '',
+      marketer: '',
+      offerStatus: 'Pending',
+      gsStatus: 'Pending',
+      visaStatus: 'Pending',
+      coeStatus: 'Pending',
+      remarks: '',
+      amount: ''
     });
     setShowAddModal(true);
   };
@@ -160,13 +158,13 @@ const handleEdit = (student) => {
     e.preventDefault();
     setFormLoading(true);
 
-    try {
+try {
       if (showEditModal && selectedStudent) {
-        await studentService.update(selectedStudent.Id, formData);
-        toast.success('Student updated successfully');
+        await applicationService.update(selectedStudent.Id, formData);
+        toast.success('Application updated successfully');
       } else {
-        await studentService.create(formData);
-        toast.success('Student added successfully');
+        await applicationService.create(formData);
+        toast.success('Application added successfully');
       }
       
       setShowAddModal(false);
@@ -174,7 +172,7 @@ const handleEdit = (student) => {
       setSelectedStudent(null);
       loadData();
     } catch (err) {
-      toast.error(`Failed to ${showEditModal ? 'update' : 'add'} student`);
+      toast.error(`Failed to ${showEditModal ? 'update' : 'add'} application`);
     } finally {
       setFormLoading(false);
     }
@@ -185,55 +183,45 @@ const handleEdit = (student) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 const columns = [
-    { key: 'Id', label: 'S.N', sortable: true },
-    { key: 'Name', label: 'Student Name', sortable: true },
+    { key: 'Id', label: 'ID', sortable: true },
+    { key: 'Name', label: 'Application Name', sortable: true },
+    { 
+      key: 'student', 
+      label: 'Student', 
+      sortable: true,
+      render: (value) => value?.Name || value || 'N/A'
+    },
     { 
       key: 'campus', 
       label: 'Campus', 
       sortable: true,
       render: (value) => value?.Name || value || 'N/A'
     },
-    { key: 'course', label: 'Course', sortable: true },
     { 
-      key: 'agent_name', 
+      key: 'agent', 
       label: 'Agent', 
       sortable: true,
       render: (value) => value?.Name || value || 'N/A'
     },
-    { key: 'intake', label: 'Intake', sortable: true },
-    { key: 'location', label: 'Location', sortable: true },
-    { key: 'offer_status', label: 'Offer Status', sortable: true, type: 'status', statusType: 'offer' },
-    { key: 'gs_status', label: 'GS Status', sortable: true, type: 'status', statusType: 'gs' },
-    { key: 'amount', label: 'Amount', sortable: true, type: 'currency' },
-    { key: 'coe_status', label: 'COE Status', sortable: true, type: 'status', statusType: 'coe' },
-    { key: 'visa_status', label: 'Visa Status', sortable: true, type: 'status', statusType: 'visa' },
     { 
-      key: 'marketer_name', 
+      key: 'marketer', 
       label: 'Marketer', 
       sortable: true,
       render: (value) => value?.Name || value || 'N/A'
     },
+    { key: 'offerStatus', label: 'Offer Status', sortable: true, type: 'status', statusType: 'offer' },
+    { key: 'gsStatus', label: 'GS Status', sortable: true, type: 'status', statusType: 'gs' },
+    { key: 'visaStatus', label: 'Visa Status', sortable: true, type: 'status', statusType: 'visa' },
+    { key: 'coeStatus', label: 'COE Status', sortable: true, type: 'status', statusType: 'coe' },
+    { key: 'amount', label: 'Amount', sortable: true, type: 'currency' },
     { key: 'remarks', label: 'Remarks', sortable: false }
   ];
 
-  const filterOptions = {
-    campusOptions: [
-      { value: 'Kathmandu', label: 'Kathmandu' },
-      { value: 'Chitwan', label: 'Chitwan' }
-    ],
-    courseOptions: [
-      { value: 'BBA', label: 'BBA' },
-      { value: 'MBA', label: 'MBA' }
-    ],
-agentOptions: agents.map(agent => ({ value: agent.Id, label: agent.Name })),
-    intakeOptions: [
-      { value: 'July', label: 'July' },
-      { value: 'November', label: 'November' }
-    ],
-    locationOptions: [
-      { value: 'Onshore', label: 'Onshore' },
-      { value: 'Offshore', label: 'Offshore' }
-    ],
+const filterOptions = {
+    agentOptions: agents.map(agent => ({ value: agent.Id, label: agent.Name })),
+    studentOptions: students.map(student => ({ value: student.Id, label: student.Name })),
+    campusOptions: campuses.map(campus => ({ value: campus.Id, label: campus.Name })),
+    marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: marketer.Name })),
     statusOptions: {
       offer: [
         { value: 'Issued', label: 'Issued' },
@@ -245,7 +233,7 @@ agentOptions: agents.map(agent => ({ value: agent.Id, label: agent.Name })),
         { value: 'Pending', label: 'Pending' },
         { value: 'Declined', label: 'Declined' }
       ],
-coe: [
+      coe: [
         { value: 'Issued', label: 'Issued' },
         { value: 'Pending', label: 'Pending' },
         { value: 'Release Required', label: 'Release Required' }
@@ -255,8 +243,7 @@ coe: [
         { value: 'Pending', label: 'Pending' },
         { value: 'Declined', label: 'Declined' }
       ]
-    },
-marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: marketer.Name }))
+    }
   };
 
   if (error) {
@@ -278,12 +265,12 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
     <div className="p-6 space-y-6 max-w-full overflow-hidden">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Student Applications</h1>
-          <p className="text-gray-600">Manage and track all student applications</p>
+<div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Applications</h1>
+          <p className="text-gray-600">Manage and track all applications</p>
         </div>
-<Button icon="Plus" onClick={handleAddStudent}>
-          Add Student
+        <Button icon="Plus" onClick={handleAddApplication}>
+          Add Application
         </Button>
       </div>
 
@@ -306,9 +293,9 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <DataTable
+<DataTable
           columns={columns}
-          data={students}
+          data={applications}
           loading={loading}
           sortConfig={sortConfig}
           onSort={handleSort}
@@ -318,7 +305,7 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
       </motion.div>
 
       {/* Summary Stats */}
-      {students.length > 0 && (
+{applications.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -328,29 +315,29 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Summary Statistics</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{students.length}</div>
+              <div className="text-2xl font-bold text-primary">{applications.length}</div>
               <div className="text-sm text-gray-500">Total Applications</div>
             </div>
-<div className="text-center">
+            <div className="text-center">
               <div className="text-2xl font-bold text-success">
-                {students.filter(s => s.offer_status === 'Issued').length}
+                {applications.filter(a => a.offerStatus === 'Issued').length}
               </div>
               <div className="text-sm text-gray-500">Offers Issued</div>
             </div>
-<div className="text-center">
+            <div className="text-center">
               <div className="text-2xl font-bold text-accent">
-                {students.filter(s => s.coe_status === 'Issued').length}
+                {applications.filter(a => a.coeStatus === 'Issued').length}
               </div>
               <div className="text-sm text-gray-500">COE Issued</div>
             </div>
-<div className="text-center">
+            <div className="text-center">
               <div className="text-2xl font-bold text-warning">
-                ${students.filter(s => s.offer_status === 'Issued').reduce((sum, s) => sum + (s.amount || 0), 0).toLocaleString()}
+                ${applications.filter(a => a.offerStatus === 'Issued').reduce((sum, a) => sum + (a.amount || 0), 0).toLocaleString()}
               </div>
               <div className="text-sm text-gray-500">Total Collection</div>
             </div>
           </div>
-</motion.div>
+        </motion.div>
       )}
 
       {/* Add/Edit Modal */}
@@ -361,9 +348,9 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
           >
-            <div className="flex items-center justify-between mb-6">
+<div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">
-                {showEditModal ? 'Edit Student' : 'Add New Student'}
+                {showEditModal ? 'Edit Application' : 'Add New Application'}
               </h2>
               <Button
                 variant="ghost"
@@ -377,20 +364,21 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
               />
             </div>
 
-            <form onSubmit={handleFormSubmit} className="space-y-4">
+<form onSubmit={handleFormSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Student Name"
+                  label="Application Name"
                   name="Name"
                   value={formData.Name}
                   onChange={handleInputChange}
                   required
                 />
-                <Input
-                  label="Course"
-                  name="course"
-                  value={formData.course}
+                <Select
+                  label="Student"
+                  name="student"
+                  value={formData.student}
                   onChange={handleInputChange}
+                  options={students.map(student => ({ value: student.Id, label: student.Name }))}
                   required
                 />
                 <Select
@@ -403,36 +391,18 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
                 />
                 <Select
                   label="Agent"
-                  name="agent_name"
-                  value={formData.agent_name}
+                  name="agent"
+                  value={formData.agent}
                   onChange={handleInputChange}
                   options={agents.map(agent => ({ value: agent.Id, label: agent.Name }))}
                   required
                 />
                 <Select
                   label="Marketer"
-                  name="marketer_name"
-                  value={formData.marketer_name}
+                  name="marketer"
+                  value={formData.marketer}
                   onChange={handleInputChange}
                   options={marketers.map(marketer => ({ value: marketer.Id, label: marketer.Name }))}
-                  required
-                />
-                <Input
-                  label="Intake"
-                  name="intake"
-                  value={formData.intake}
-                  onChange={handleInputChange}
-                  required
-                />
-                <Select
-                  label="Location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  options={[
-                    { value: 'Onshore', label: 'Onshore' },
-                    { value: 'Offshore', label: 'Offshore' }
-                  ]}
                   required
                 />
                 <Input
@@ -443,10 +413,10 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
                   onChange={handleInputChange}
                   required
                 />
-                <Select
+<Select
                   label="Offer Status"
-                  name="offer_status"
-                  value={formData.offer_status}
+                  name="offerStatus"
+                  value={formData.offerStatus}
                   onChange={handleInputChange}
                   options={[
                     { value: 'Issued', label: 'Issued' },
@@ -456,8 +426,8 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
                 />
                 <Select
                   label="GS Status"
-                  name="gs_status"
-                  value={formData.gs_status}
+                  name="gsStatus"
+                  value={formData.gsStatus}
                   onChange={handleInputChange}
                   options={[
                     { value: 'Approved', label: 'Approved' },
@@ -467,8 +437,8 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
                 />
                 <Select
                   label="Visa Status"
-                  name="visa_status"
-                  value={formData.visa_status}
+                  name="visaStatus"
+                  value={formData.visaStatus}
                   onChange={handleInputChange}
                   options={[
                     { value: 'Approved', label: 'Approved' },
@@ -478,8 +448,8 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
                 />
                 <Select
                   label="COE Status"
-                  name="coe_status"
-                  value={formData.coe_status}
+                  name="coeStatus"
+                  value={formData.coeStatus}
                   onChange={handleInputChange}
                   options={[
                     { value: 'Issued', label: 'Issued' },
@@ -513,8 +483,8 @@ marketerOptions: marketers.map(marketer => ({ value: marketer.Id, label: markete
                 >
                   Cancel
                 </Button>
-                <Button type="submit" loading={formLoading}>
-                  {showEditModal ? 'Update Student' : 'Add Student'}
+<Button type="submit" loading={formLoading}>
+                  {showEditModal ? 'Update Application' : 'Add Application'}
                 </Button>
               </div>
             </form>

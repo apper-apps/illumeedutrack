@@ -6,32 +6,57 @@ const apperClient = new ApperClient({
 });
 
 const userService = {
-  async getAllUsers() {
+async getAllUsers() {
     try {
-      // Since we don't have a specific users table, we'll simulate user management
-      // In a real implementation, this would fetch from a users table
-      const mockUsers = [
-        {
-          Id: 1,
-          Name: 'John Admin',
-          email: 'john@example.com',
-          role: 'Admin',
-          active: true,
-          createdAt: '2024-01-15',
-          lastLogin: '2024-01-20'
-        },
-        {
-          Id: 2,
-          Name: 'Sarah Manager',
-          email: 'sarah@example.com',
-          role: 'Manager',
-          active: true,
-          createdAt: '2024-01-10',
-          lastLogin: '2024-01-19'
-        }
-      ];
+      // Fetch real users from Owner fields across all tables
+      const params = {
+        fields: [
+          { field: { Name: "Name" } },
+          { field: { Name: "email" } }
+        ]
+      };
+
+      const [campusOwners, studentOwners, agentOwners, marketerOwners, applicationOwners] = await Promise.all([
+        apperClient.fetchRecords('campus', { 
+          fields: [{ field: { name: "Owner" }, referenceField: { field: { Name: "Name" } } }] 
+        }).catch(() => ({ data: [] })),
+        apperClient.fetchRecords('student', { 
+          fields: [{ field: { name: "Owner" }, referenceField: { field: { Name: "Name" } } }] 
+        }).catch(() => ({ data: [] })),
+        apperClient.fetchRecords('agent', { 
+          fields: [{ field: { name: "Owner" }, referenceField: { field: { Name: "Name" } } }] 
+        }).catch(() => ({ data: [] })),
+        apperClient.fetchRecords('marketer', { 
+          fields: [{ field: { name: "Owner" }, referenceField: { field: { Name: "Name" } } }] 
+        }).catch(() => ({ data: [] })),
+        apperClient.fetchRecords('application', { 
+          fields: [{ field: { name: "Owner" }, referenceField: { field: { Name: "Name" } } }] 
+        }).catch(() => ({ data: [] }))
+      ]);
+
+      // Aggregate unique users from all Owner fields
+      const allUsers = new Map();
       
-      return mockUsers;
+      [campusOwners, studentOwners, agentOwners, marketerOwners, applicationOwners].forEach(response => {
+        if (response.success && response.data) {
+          response.data.forEach(record => {
+            if (record.Owner && record.Owner.Id) {
+              const user = {
+                Id: record.Owner.Id,
+                Name: record.Owner.Name,
+                email: record.Owner.email || `user${record.Owner.Id}@example.com`,
+                role: 'User',
+                active: true,
+                createdAt: new Date().toISOString().split('T')[0],
+                lastLogin: new Date().toISOString().split('T')[0]
+              };
+              allUsers.set(record.Owner.Id, user);
+            }
+          });
+        }
+      });
+
+      return Array.from(allUsers.values());
     } catch (error) {
       console.error("Error fetching users:", error);
       throw error;
