@@ -159,7 +159,7 @@ const DataTable = ({
                 </td>
 {columns.map((column) => (
                   <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {row ? formatCellValue(row[column.key], column) : ''}
+                    {row && row[column.key] !== undefined ? formatCellValue(row[column.key], column) : '-'}
                   </td>
                 ))}
                 {actions && (onEdit || onDelete) && (
