@@ -1,0 +1,42 @@
+[
+  {
+    "Id": 1,
+    "name": "Sarah Wilson",
+    "email": "sarah.wilson@marketpro.com",
+    "phone": "+1-555-0123",
+    "company": "MarketPro Solutions",
+    "active": true,
+    "specialization": "Digital Marketing",
+    "performance": "Excellent"
+  },
+  {
+    "Id": 2,
+    "name": "Michael Chen",
+    "email": "m.chen@brandwise.com",
+    "phone": "+1-555-0124",
+    "company": "BrandWise Agency",
+    "active": true,
+    "specialization": "Content Marketing",
+    "performance": "Good"
+  },
+  {
+    "Id": 3,
+    "name": "Emily Rodriguez",
+    "email": "emily.r@creativehub.com",
+    "phone": "+1-555-0125",
+    "company": "Creative Hub",
+    "active": false,
+    "specialization": "Social Media",
+    "performance": "Average"
+  },
+  {
+    "Id": 4,
+    "name": "David Thompson",
+    "email": "david.t@marketforce.com",
+    "phone": "+1-555-0126",
+    "company": "MarketForce",
+    "active": true,
+    "specialization": "SEO & Analytics",
+    "performance": "Excellent"
+  }
+]
