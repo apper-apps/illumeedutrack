@@ -5,17 +5,23 @@ const apperClient = new ApperClient({
   apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
 });
 
-const campusService = {
+const marketerPerformanceService = {
   async getAll() {
     try {
       const params = {
         fields: [
           { field: { Name: "Name" } },
-          { field: { Name: "location" } }
+          { 
+            field: { name: "marketer" },
+            referenceField: { field: { Name: "Name" } }
+          },
+          { field: { Name: "totalOffers" } },
+          { field: { Name: "totalCoes" } },
+          { field: { Name: "totalCollections" } }
         ]
       };
       
-      const response = await apperClient.fetchRecords('campus', params);
+      const response = await apperClient.fetchRecords('marketer_performance', params);
       
       if (!response.success) {
         console.error(response.message);
@@ -24,26 +30,32 @@ const campusService = {
       
       return response.data || [];
     } catch (error) {
-      console.error("Error fetching campuses:", error);
+      console.error("Error fetching marketer performance:", error);
       throw error;
     }
   },
 
   async getById(id) {
     try {
-      const campusId = parseInt(id);
-      if (isNaN(campusId)) {
-        throw new Error('Invalid campus ID');
+      const performanceId = parseInt(id);
+      if (isNaN(performanceId)) {
+        throw new Error('Invalid marketer performance ID');
       }
       
       const params = {
         fields: [
           { field: { Name: "Name" } },
-          { field: { Name: "location" } }
+          { 
+            field: { name: "marketer" },
+            referenceField: { field: { Name: "Name" } }
+          },
+          { field: { Name: "totalOffers" } },
+          { field: { Name: "totalCoes" } },
+          { field: { Name: "totalCollections" } }
         ]
       };
       
-      const response = await apperClient.getRecordById('campus', campusId, params);
+      const response = await apperClient.getRecordById('marketer_performance', performanceId, params);
       
       if (!response.success) {
         console.error(response.message);
@@ -52,21 +64,24 @@ const campusService = {
       
       return response.data;
     } catch (error) {
-      console.error(`Error fetching campus with ID ${id}:`, error);
+      console.error(`Error fetching marketer performance with ID ${id}:`, error);
       throw error;
     }
   },
 
-  async create(campusData) {
+  async create(performanceData) {
     try {
       const params = {
         records: [{
-          Name: campusData.name || campusData.Name,
-          location: campusData.location
+          Name: performanceData.Name || performanceData.name,
+          marketer: parseInt(performanceData.marketer),
+          totalOffers: performanceData.totalOffers || 0,
+          totalCoes: performanceData.totalCoes || 0,
+          totalCollections: performanceData.totalCollections || 0
         }]
       };
       
-      const response = await apperClient.createRecord('campus', params);
+      const response = await apperClient.createRecord('marketer_performance', params);
       
       if (!response.success) {
         console.error(response.message);
@@ -79,33 +94,36 @@ const campusService = {
         
         if (failedRecords.length > 0) {
           console.error(`Failed to create ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
-          throw new Error('Failed to create campus');
+          throw new Error('Failed to create marketer performance');
         }
         
         return successfulRecords[0]?.data;
       }
     } catch (error) {
-      console.error("Error creating campus:", error);
+      console.error("Error creating marketer performance:", error);
       throw error;
     }
   },
 
-  async update(id, campusData) {
+  async update(id, performanceData) {
     try {
-      const campusId = parseInt(id);
-      if (isNaN(campusId)) {
-        throw new Error('Invalid campus ID');
+      const performanceId = parseInt(id);
+      if (isNaN(performanceId)) {
+        throw new Error('Invalid marketer performance ID');
       }
       
       const params = {
         records: [{
-          Id: campusId,
-          Name: campusData.name || campusData.Name,
-          location: campusData.location
+          Id: performanceId,
+          Name: performanceData.Name || performanceData.name,
+          marketer: parseInt(performanceData.marketer),
+          totalOffers: performanceData.totalOffers,
+          totalCoes: performanceData.totalCoes,
+          totalCollections: performanceData.totalCollections
         }]
       };
       
-      const response = await apperClient.updateRecord('campus', params);
+      const response = await apperClient.updateRecord('marketer_performance', params);
       
       if (!response.success) {
         console.error(response.message);
@@ -118,29 +136,29 @@ const campusService = {
         
         if (failedUpdates.length > 0) {
           console.error(`Failed to update ${failedUpdates.length} records:${JSON.stringify(failedUpdates)}`);
-          throw new Error('Failed to update campus');
+          throw new Error('Failed to update marketer performance');
         }
         
         return successfulUpdates[0]?.data;
       }
     } catch (error) {
-      console.error("Error updating campus:", error);
+      console.error("Error updating marketer performance:", error);
       throw error;
     }
   },
 
   async delete(id) {
     try {
-      const campusId = parseInt(id);
-      if (isNaN(campusId)) {
-        throw new Error('Invalid campus ID');
+      const performanceId = parseInt(id);
+      if (isNaN(performanceId)) {
+        throw new Error('Invalid marketer performance ID');
       }
       
       const params = {
-        RecordIds: [campusId]
+        RecordIds: [performanceId]
       };
       
-      const response = await apperClient.deleteRecord('campus', params);
+      const response = await apperClient.deleteRecord('marketer_performance', params);
       
       if (!response.success) {
         console.error(response.message);
@@ -152,16 +170,16 @@ const campusService = {
         
         if (failedDeletions.length > 0) {
           console.error(`Failed to delete ${failedDeletions.length} records:${JSON.stringify(failedDeletions)}`);
-          throw new Error('Failed to delete campus');
+          throw new Error('Failed to delete marketer performance');
         }
         
         return true;
       }
     } catch (error) {
-      console.error("Error deleting campus:", error);
+      console.error("Error deleting marketer performance:", error);
       throw error;
     }
   }
 };
 
-export default campusService;
+export default marketerPerformanceService;

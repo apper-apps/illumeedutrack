@@ -15,11 +15,13 @@ const Analytics = () => {
     agentPerformance: [],
     marketerPerformance: []
   });
-const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState('monthly');
   const [marketerFilters, setMarketerFilters] = useState({});
   const [filteredMarketerPerformance, setFilteredMarketerPerformance] = useState([]);
+  const [selectedMarketer, setSelectedMarketer] = useState('');
+  const [marketerApplications, setMarketerApplications] = useState([]);
   useEffect(() => {
     loadAnalyticsData();
   }, []);
@@ -131,14 +133,62 @@ const [loading, setLoading] = useState(true);
         </motion.div>
       </div>
 
-      {/* Marketer Performance Filters */}
+{/* Marketer Selection and Filters */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
         className="bg-white rounded-lg p-6 shadow-card"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Marketer Performance Filters</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Marketer Analytics & Application Filters</h3>
+        
+        {/* Marketer Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Select Marketer for Application View</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <select
+              value={selectedMarketer}
+              onChange={async (e) => {
+                setSelectedMarketer(e.target.value);
+                if (e.target.value) {
+                  try {
+                    const marketerApplications = await analyticsService.getApplicationsByMarketer(e.target.value);
+                    setMarketerApplications(marketerApplications);
+                    toast.success('Marketer applications loaded successfully');
+                  } catch (err) {
+                    toast.error('Failed to load marketer applications');
+                  }
+                } else {
+                  setMarketerApplications([]);
+                }
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">Select a Marketer</option>
+              {analyticsData.marketerPerformance.map(marketer => (
+                <option key={marketer.marketer} value={marketer.marketer}>
+                  {marketer.marketer} ({marketer.applications} applications)
+                </option>
+              ))}
+            </select>
+            {selectedMarketer && (
+              <Button
+                onClick={() => {
+                  setSelectedMarketer('');
+                  setMarketerApplications([]);
+                  toast.info('Marketer selection cleared');
+                }}
+                variant="secondary"
+                icon="X"
+              >
+                Clear Selection
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Performance Filters */}
+        <h4 className="text-md font-medium text-gray-800 mb-3">Performance Filters</h4>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <select
             value={marketerFilters.campus || ''}
@@ -182,6 +232,8 @@ const [loading, setLoading] = useState(true);
             Apply Filters
           </Button>
         </div>
+        
+        {/* Active Filters Display */}
         {(marketerFilters.campus || marketerFilters.course || marketerFilters.intake) && (
           <div className="mt-4 flex items-center gap-2">
             <span className="text-sm text-gray-600">Active filters:</span>
@@ -214,7 +266,35 @@ const [loading, setLoading] = useState(true);
             </Button>
           </div>
         )}
-</motion.div>
+
+        {/* Selected Marketer Applications */}
+        {selectedMarketer && marketerApplications.length > 0 && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h4 className="text-md font-medium text-gray-800 mb-3">
+              Applications by {selectedMarketer} ({marketerApplications.length} total)
+            </h4>
+            <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+              <div className="grid gap-2">
+                {marketerApplications.map((app, index) => (
+                  <div key={index} className="flex justify-between items-center py-2 px-3 bg-white rounded border">
+                    <span className="font-medium">{app.studentName || app.Name}</span>
+                    <div className="flex gap-2 text-xs">
+                      <span className={`px-2 py-1 rounded ${
+                        app.offer_status === 'Issued' ? 'bg-green-100 text-green-800' : 
+                        app.offer_status === 'Declined' ? 'bg-red-100 text-red-800' : 
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {app.offer_status}
+                      </span>
+                      <span className="text-gray-500">${app.amount || 0}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
 
       {/* Filtered Marketer Performance Table */}
       {filteredMarketerPerformance.length > 0 && (

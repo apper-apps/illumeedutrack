@@ -3,12 +3,14 @@ import { motion } from 'framer-motion';
 import StatCard from '@/components/molecules/StatCard';
 import ChartContainer from '@/components/organisms/ChartContainer';
 import analyticsService from '@/services/api/analyticsService';
+import marketerPerformanceService from '@/services/api/marketerPerformanceService';
 import { toast } from 'react-toastify';
 
 const Dashboard = () => {
-  const [dashboardData, setDashboardData] = useState({
+const [dashboardData, setDashboardData] = useState({
     stats: null,
-    chartData: []
+    chartData: [],
+    marketerPerformance: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,15 +20,17 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       
-      try {
-        const [stats, monthlyData] = await Promise.all([
+try {
+        const [stats, monthlyData, marketerPerformance] = await Promise.all([
           analyticsService.getDashboardStats(),
-          analyticsService.getMonthlyData()
+          analyticsService.getMonthlyData(),
+          marketerPerformanceService.getAll()
         ]);
 
-        setDashboardData({
+setDashboardData({
           stats,
-          chartData: monthlyData
+          chartData: monthlyData,
+          marketerPerformance
         });
       } catch (err) {
         setError(err.message || 'Failed to load dashboard data');
@@ -39,7 +43,7 @@ const Dashboard = () => {
     loadDashboardData();
   }, []);
 
-  const statCards = [
+const statCards = [
     {
       title: 'Total Applications',
       value: dashboardData.stats?.totalApplications || 0,
@@ -65,14 +69,24 @@ const Dashboard = () => {
       trendValue: 15.7
     },
     {
-title: 'Total Collection',
-      value: dashboardData.stats?.totalCollection || 0,
+      title: 'Total Collection',
+      value: `$${(dashboardData.stats?.totalCollection || 0).toLocaleString()}`,
       icon: 'DollarSign',
       color: 'warning',
       trend: 'up',
       trendValue: 22.1
     }
   ];
+
+  const marketerStats = dashboardData.marketerPerformance.slice(0, 3).map((perf, index) => ({
+    title: perf.marketer?.Name || 'Unknown Marketer',
+    value: `${perf.totalOffers || 0} offers`,
+    icon: 'Megaphone',
+    color: index === 0 ? 'primary' : index === 1 ? 'success' : 'accent',
+    trend: 'up',
+    trendValue: Math.random() * 20 + 5,
+    subtitle: `${perf.totalCoes || 0} COEs, $${(perf.totalCollections || 0).toLocaleString()}`
+  }));
 
   if (loading) {
     return (
@@ -128,7 +142,7 @@ title: 'Total Collection',
     );
   }
 
-  return (
+return (
     <div className="p-6 space-y-6 max-w-full overflow-hidden">
       {/* Page Header */}
       <div className="mb-8">
@@ -149,6 +163,29 @@ title: 'Total Collection',
           </motion.div>
         ))}
       </div>
+
+      {/* Marketer Performance Cards */}
+      {marketerStats.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Marketer Performance</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {marketerStats.map((card, index) => (
+              <motion.div
+                key={card.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + index * 0.1 }}
+              >
+                <StatCard {...card} />
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Main Chart */}
       <motion.div

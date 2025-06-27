@@ -33,11 +33,18 @@ export const routes = {
     icon: 'Users',
     component: Agents
   },
-  settings: {
+settings: {
     id: 'settings',
     label: 'Settings',
     path: '/settings',
     icon: 'Settings',
+    component: Settings
+  },
+  users: {
+    id: 'users',
+    label: 'User Management',
+    path: '/users',
+    icon: 'UserCog',
     component: Settings
   }
 };

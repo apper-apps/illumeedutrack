@@ -1,470 +1,527 @@
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import marketerService from "@/services/api/marketerService";
-import { toast } from "react-toastify";
-import agentService from "@/services/api/agentService";
-import campusService from "@/services/api/campusService";
-import Agents from "@/components/pages/Agents";
-import Select from "@/components/atoms/Select";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
+import Button from '@/components/atoms/Button';
+import Input from '@/components/atoms/Input';
+import Select from '@/components/atoms/Select';
+import DataTable from '@/components/molecules/DataTable';
+import userService from '@/services/api/userService';
+import ApperIcon from '@/components/ApperIcon';
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState('campus');
-  const [campuses, setCampuses] = useState([]);
-  const [agents, setAgents] = useState([]);
-  const [marketers, setMarketers] = useState([]);
+  const [activeTab, setActiveTab] = useState('users');
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [generatedCredentials, setGeneratedCredentials] = useState(null);
+  const [formData, setFormData] = useState({
+    Name: '',
+    email: '',
+    role: 'User',
+    active: true,
+    phone: '',
+    department: '',
+    position: ''
+  });
+  const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (activeTab === 'users') {
+      loadUsers();
+    }
+  }, [activeTab]);
 
-const loadData = async () => {
+  const loadUsers = async () => {
     setLoading(true);
     try {
-      const [campusData, agentData, marketerData] = await Promise.all([
-        campusService.getAll(),
-        agentService.getAll(),
-        marketerService.getAll()
-      ]);
-      setCampuses(campusData);
-      setAgents(agentData);
-      setMarketers(marketerData);
+      const usersData = await userService.getAllUsers();
+      setUsers(usersData);
     } catch (err) {
-      toast.error('Failed to load settings data');
+      toast.error('Failed to load users');
     } finally {
       setLoading(false);
     }
   };
 
-const handleSubmit = async (e) => {
+  const handleAddUser = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    
+    setFormLoading(true);
+
     try {
-      if (activeTab === 'campus') {
-        if (formData.Id) {
-          await campusService.update(formData.Id, formData);
-          toast.success('Campus updated successfully');
-        } else {
-          await campusService.create(formData);
-          toast.success('Campus created successfully');
-        }
-      } else if (activeTab === 'agent') {
-        if (formData.Id) {
-          await agentService.update(formData.Id, formData);
-          toast.success('Agent updated successfully');
-        } else {
-          await agentService.create(formData);
-          toast.success('Agent created successfully');
-        }
-      } else if (activeTab === 'marketer') {
-        if (formData.Id) {
-          await marketerService.update(formData.Id, formData);
-          toast.success('Marketer updated successfully');
-        } else {
-          await marketerService.create(formData);
-          toast.success('Marketer created successfully');
-        }
-      }
+      const newUser = await userService.createUser(formData);
+      const credentials = await userService.generateLoginCredentials(formData);
       
-      setFormData({});
-      loadData();
+      setGeneratedCredentials(credentials);
+      setShowCredentialsModal(true);
+      setShowAddUserModal(false);
+      
+      toast.success('User created successfully');
+      loadUsers();
+      
+      // Reset form
+      setFormData({
+        Name: '',
+        email: '',
+        role: 'User',
+        active: true,
+        phone: '',
+        department: '',
+        position: ''
+      });
     } catch (err) {
-      toast.error('Failed to save data');
+      toast.error('Failed to create user');
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 
-  const handleEdit = (item) => {
-    setFormData(item);
-  };
-
-const handleDelete = async (item, type) => {
-    if (window.confirm(`Are you sure you want to delete ${item.name}?`)) {
+  const handleDeleteUser = async (user) => {
+    if (window.confirm(`Are you sure you want to delete ${user.Name}?`)) {
       try {
-        if (type === 'campus') {
-          await campusService.delete(item.Id);
-          toast.success('Campus deleted successfully');
-        } else if (type === 'agent') {
-          await agentService.delete(item.Id);
-          toast.success('Agent deleted successfully');
-        } else if (type === 'marketer') {
-          await marketerService.delete(item.Id);
-          toast.success('Marketer deleted successfully');
-        }
-        loadData();
+        await userService.deleteUser(user.Id);
+        toast.success('User deleted successfully');
+        loadUsers();
       } catch (err) {
-        toast.error('Failed to delete item');
+        toast.error('Failed to delete user');
       }
     }
   };
 
-const tabs = [
-    { id: 'campus', label: 'Campus Management', icon: 'Building' },
-    { id: 'course', label: 'Course Management', icon: 'BookOpen' },
-    { id: 'agent', label: 'Agent Management', icon: 'Users' },
-    { id: 'marketer', label: 'Marketer Management', icon: 'TrendingUp' },
-    { id: 'intake', label: 'Intake Management', icon: 'Calendar' }
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setFormData({
+      Name: user.Name,
+      email: user.email,
+      role: user.role,
+      active: user.active,
+      phone: user.phone || '',
+      department: user.department || '',
+      position: user.position || ''
+    });
+    setShowAddUserModal(true);
+  };
+
+  const handleResetPassword = async (user) => {
+    try {
+      const credentials = await userService.generateLoginCredentials(user);
+      setGeneratedCredentials(credentials);
+      setShowCredentialsModal(true);
+      toast.success('Password reset successfully');
+    } catch (err) {
+      toast.error('Failed to reset password');
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const userColumns = [
+    { key: 'Id', label: 'ID', sortable: true },
+    { key: 'Name', label: 'Name', sortable: true },
+    { key: 'email', label: 'Email', sortable: true },
+    { key: 'role', label: 'Role', sortable: true },
+    { 
+      key: 'active', 
+      label: 'Status', 
+      sortable: true,
+      render: (value) => (
+        <span className={`px-2 py-1 rounded-full text-xs ${
+          value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {value ? 'Active' : 'Inactive'}
+        </span>
+      )
+    },
+    { key: 'createdAt', label: 'Created', sortable: true },
+    { key: 'lastLogin', label: 'Last Login', sortable: true }
   ];
 
-  const renderCampusForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-4">
-<Input
-        label="Campus Name"
-        value={formData.Name || formData.name || ''}
-        onChange={(e) => setFormData({...formData, Name: e.target.value, name: e.target.value})}
-        required
-      />
-      <Input
-        label="Location"
-        value={formData.location || ''}
-        onChange={(e) => setFormData({...formData, location: e.target.value})}
-        required
-      />
-      <div className="flex gap-2">
-        <Button type="submit" loading={loading}>
-          {formData.Id ? 'Update' : 'Create'} Campus
-        </Button>
-        {formData.Id && (
-          <Button type="button" variant="secondary" onClick={() => setFormData({})}>
-            Cancel
-          </Button>
-        )}
-      </div>
-    </form>
-  );
-
-  const renderAgentForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-4">
-<Input
-        label="Agent Name"
-        value={formData.Name || formData.name || ''}
-        onChange={(e) => setFormData({...formData, Name: e.target.value, name: e.target.value})}
-        required
-      />
-      <Input
-        label="Email"
-        type="email"
-        value={formData.email || ''}
-        onChange={(e) => setFormData({...formData, email: e.target.value})}
-        required
-      />
-      <Input
-        label="Phone"
-        value={formData.phone || ''}
-        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-        required
-      />
-      <Select
-        label="Status"
-        value={formData.active ? 'true' : 'false'}
-        onChange={(e) => setFormData({...formData, active: e.target.value === 'true'})}
-        options={[
-          { value: 'true', label: 'Active' },
-          { value: 'false', label: 'Inactive' }
-        ]}
-      />
-      <div className="flex gap-2">
-        <Button type="submit" loading={loading}>
-          {formData.Id ? 'Update' : 'Create'} Agent
-        </Button>
-        {formData.Id && (
-          <Button type="button" variant="secondary" onClick={() => setFormData({})}>
-            Cancel
-          </Button>
-        )}
-      </div>
-    </form>
-  );
-
-  const renderCourseSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">Available Courses</h4>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center p-2 bg-white rounded">
-            <span>Bachelor of Business Administration (BBA)</span>
-            <Button size="sm" variant="ghost" onClick={() => toast.info('Course editing will be implemented')}>
-              Edit
-            </Button>
-          </div>
-          <div className="flex justify-between items-center p-2 bg-white rounded">
-            <span>Master of Business Administration (MBA)</span>
-            <Button size="sm" variant="ghost" onClick={() => toast.info('Course editing will be implemented')}>
-              Edit
-            </Button>
-          </div>
-        </div>
-      </div>
-      <Button onClick={() => toast.info('Add course functionality will be implemented')}>
-        Add New Course
-      </Button>
-    </div>
-  );
-
-  const renderIntakeSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <h4 className="font-medium text-green-900 mb-2">Available Intakes</h4>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center p-2 bg-white rounded">
-            <span>July Intake</span>
-            <Button size="sm" variant="ghost" onClick={() => toast.info('Intake editing will be implemented')}>
-              Edit
-            </Button>
-          </div>
-          <div className="flex justify-between items-center p-2 bg-white rounded">
-            <span>November Intake</span>
-            <Button size="sm" variant="ghost" onClick={() => toast.info('Intake editing will be implemented')}>
-              Edit
-            </Button>
-          </div>
-        </div>
-      </div>
-      <Button onClick={() => toast.info('Add intake functionality will be implemented')}>
-        Add New Intake
-      </Button>
-    </div>
-);
-
-  const renderMarketerForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-4">
-<Input
-        label="Marketer Name"
-        value={formData.Name || formData.name || ''}
-        onChange={(e) => setFormData({...formData, Name: e.target.value, name: e.target.value})}
-        required
-      />
-      <Input
-        label="Email"
-        type="email"
-        value={formData.email || ''}
-        onChange={(e) => setFormData({...formData, email: e.target.value})}
-        required
-      />
-      <Input
-        label="Phone"
-        value={formData.phone || ''}
-        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-        required
-      />
-      <Input
-        label="Company"
-        value={formData.company || ''}
-        onChange={(e) => setFormData({...formData, company: e.target.value})}
-        required
-      />
-      <Select
-        label="Specialization"
-        value={formData.specialization || 'General Marketing'}
-        onChange={(e) => setFormData({...formData, specialization: e.target.value})}
-        options={[
-          { value: 'Digital Marketing', label: 'Digital Marketing' },
-          { value: 'Content Marketing', label: 'Content Marketing' },
-          { value: 'Social Media', label: 'Social Media' },
-          { value: 'SEO & Analytics', label: 'SEO & Analytics' },
-          { value: 'Email Marketing', label: 'Email Marketing' },
-          { value: 'General Marketing', label: 'General Marketing' }
-        ]}
-      />
-      <Select
-        label="Status"
-        value={formData.active ? 'true' : 'false'}
-        onChange={(e) => setFormData({...formData, active: e.target.value === 'true'})}
-        options={[
-          { value: 'true', label: 'Active' },
-          { value: 'false', label: 'Inactive' }
-        ]}
-      />
-      <div className="flex gap-2">
-        <Button type="submit" loading={loading}>
-          {formData.Id ? 'Update' : 'Create'} Marketer
-        </Button>
-        {formData.Id && (
-          <Button type="button" variant="secondary" onClick={() => setFormData({})}>
-            Cancel
-          </Button>
-        )}
-      </div>
-    </form>
-  );
+  const tabs = [
+    { id: 'users', label: 'User Management', icon: 'Users' },
+    { id: 'system', label: 'System Settings', icon: 'Settings' },
+    { id: 'security', label: 'Security', icon: 'Shield' }
+  ];
 
   return (
     <div className="p-6 space-y-6 max-w-full overflow-hidden">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">System Settings</h1>
-        <p className="text-gray-600">Manage campus, courses, agents, and intake configurations</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Settings</h1>
+          <p className="text-gray-600">Manage system settings and user accounts</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-card overflow-hidden">
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-3 px-6 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
-                  activeTab === tab.id
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
->
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {tab.icon === 'Building' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />}
-                  {tab.icon === 'BookOpen' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />}
-                  {tab.icon === 'Users' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />}
-                  {tab.icon === 'TrendingUp' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />}
-                  {tab.icon === 'Calendar' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />}
-                </svg>
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        <div className="p-6">
-          {activeTab === 'campus' && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-6"
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex space-x-8">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === tab.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">
-                    {formData.Id ? 'Edit Campus' : 'Add New Campus'}
-                  </h3>
-                  {renderCampusForm()}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Existing Campuses</h3>
-                  <div className="space-y-2">
-{campuses.map((campus) => (
-                      <div key={campus.Id} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium">{campus.Name || campus.name}</div>
-                          <div className="text-sm text-gray-500">{campus.location}</div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => handleEdit(campus)}>
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDelete(campus, 'campus')}>
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
+              <ApperIcon name={tab.icon} size={16} />
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-          {activeTab === 'course' && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              {renderCourseSettings()}
-            </motion.div>
-          )}
-
-          {activeTab === 'agent' && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-6"
-            >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">
-                    {formData.Id ? 'Edit Agent' : 'Add New Agent'}
-                  </h3>
-                  {renderAgentForm()}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Existing Agents</h3>
-                  <div className="space-y-2">
-{agents.map((agent) => (
-                      <div key={agent.Id} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium">{agent.Name || agent.name}</div>
-                          <div className="text-sm text-gray-500">{agent.email}</div>
-                          <div className="text-xs text-gray-400">{agent.phone}</div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => handleEdit(agent)}>
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDelete(agent, 'agent')}>
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'intake' && (
-<motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              {renderIntakeSettings()}
-            </motion.div>
-          )}
-
-      {activeTab === 'marketer' && (
+      {/* Tab Content */}
+      {activeTab === 'users' && (
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">
-                {formData.Id ? 'Edit Marketer' : 'Add New Marketer'}
-              </h3>
-              {renderMarketerForm()}
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Existing Marketers</h3>
-              <div className="space-y-2">
-{marketers.map((marketer) => (
-                  <div key={marketer.Id} className="flex justify-between items-center p-3 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{marketer.Name || marketer.name}</div>
-                      <div className="text-sm text-gray-500">{marketer.email}</div>
-                      <div className="text-xs text-gray-400">{marketer.company} • {marketer.specialization}</div>
-                      <div className="text-xs text-gray-400">{marketer.phone}</div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => handleEdit(marketer)}>
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleDelete(marketer, 'marketer')}>
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+          {/* User Management Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">User Management</h2>
+            <Button
+              icon="Plus"
+              onClick={() => {
+                setSelectedUser(null);
+                setFormData({
+                  Name: '',
+                  email: '',
+                  role: 'User',
+                  active: true,
+                  phone: '',
+                  department: '',
+                  position: ''
+                });
+                setShowAddUserModal(true);
+              }}
+            >
+              Add User
+            </Button>
+          </div>
+
+          {/* Users Table */}
+          <DataTable
+            columns={userColumns}
+            data={users}
+            loading={loading}
+            onEdit={handleEditUser}
+            onDelete={handleDeleteUser}
+            customActions={(user) => (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleResetPassword(user)}
+                icon="Key"
+              >
+                Reset Password
+              </Button>
+            )}
+          />
+        </motion.div>
+      )}
+
+      {activeTab === 'system' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="bg-white rounded-lg p-6 shadow-card">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">System Configuration</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Application Name
+                </label>
+                <Input value="EduTrack Pro" disabled />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Default Currency
+                </label>
+                <Select
+                  options={[
+                    { value: 'USD', label: 'USD ($)' },
+                    { value: 'EUR', label: 'EUR (€)' },
+                    { value: 'GBP', label: 'GBP (£)' }
+                  ]}
+                  value="USD"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Time Zone
+                </label>
+                <Select
+                  options={[
+                    { value: 'UTC', label: 'UTC' },
+                    { value: 'EST', label: 'Eastern Time' },
+                    { value: 'PST', label: 'Pacific Time' }
+                  ]}
+                  value="UTC"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date Format
+                </label>
+                <Select
+                  options={[
+                    { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
+                    { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
+                    { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' }
+                  ]}
+                  value="MM/DD/YYYY"
+                />
+              </div>
+            </div>
+            <div className="mt-6">
+              <Button>Save Changes</Button>
             </div>
           </div>
         </motion.div>
       )}
-    </div>
-</div>
+
+      {activeTab === 'security' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="bg-white rounded-lg p-6 shadow-card">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-900">Two-Factor Authentication</h3>
+                  <p className="text-sm text-gray-500">Add an extra layer of security to user accounts</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-900">Session Timeout</h3>
+                  <p className="text-sm text-gray-500">Automatically log out inactive users</p>
+                </div>
+                <Select
+                  options={[
+                    { value: '30', label: '30 minutes' },
+                    { value: '60', label: '1 hour' },
+                    { value: '120', label: '2 hours' },
+                    { value: '480', label: '8 hours' }
+                  ]}
+                  value="60"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-900">Password Strength Requirements</h3>
+                  <p className="text-sm text-gray-500">Enforce strong password policies</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
+            <div className="mt-6">
+              <Button>Update Security Settings</Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Add/Edit User Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                {selectedUser ? 'Edit User' : 'Add New User'}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddUserModal(false)}
+                icon="X"
+              />
+            </div>
+
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Full Name"
+                  name="Name"
+                  value={formData.Name}
+                  onChange={handleInputChange}
+                  required
+                />
+                <Input
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+                <Select
+                  label="Role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  options={[
+                    { value: 'Admin', label: 'Administrator' },
+                    { value: 'Manager', label: 'Manager' },
+                    { value: 'User', label: 'User' },
+                    { value: 'Viewer', label: 'Viewer' }
+                  ]}
+                  required
+                />
+                <Input
+                  label="Phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  label="Department"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  label="Position"
+                  name="position"
+                  value={formData.position}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="active"
+                  name="active"
+                  checked={formData.active}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+                <label htmlFor="active" className="ml-2 block text-sm text-gray-900">
+                  Active User
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowAddUserModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" loading={formLoading}>
+                  {selectedUser ? 'Update User' : 'Create User'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Login Credentials Modal */}
+      {showCredentialsModal && generatedCredentials && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg p-6 w-full max-w-md mx-4"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Login Credentials</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCredentialsModal(false)}
+                icon="X"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800 mb-3">
+                  Login credentials have been generated. Please share these securely with the user.
+                </p>
+                
+                <div className="space-y-2">
+                  <div>
+                    <label className="block text-xs font-medium text-blue-900">Email:</label>
+                    <code className="block text-sm bg-white px-2 py-1 rounded border">
+                      {generatedCredentials.email}
+                    </code>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-blue-900">Temporary Password:</label>
+                    <code className="block text-sm bg-white px-2 py-1 rounded border">
+                      {generatedCredentials.temporaryPassword}
+                    </code>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-blue-900">Login URL:</label>
+                    <code className="block text-sm bg-white px-2 py-1 rounded border">
+                      {generatedCredentials.loginUrl}
+                    </code>
+                  </div>
+                </div>
+                
+                {generatedCredentials.mustChangePassword && (
+                  <p className="text-xs text-blue-700 mt-3">
+                    ⚠️ User must change password on first login
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `Email: ${generatedCredentials.email}\nPassword: ${generatedCredentials.temporaryPassword}\nLogin: ${generatedCredentials.loginUrl}`
+                    );
+                    toast.success('Credentials copied to clipboard');
+                  }}
+                  icon="Copy"
+                >
+                  Copy Details
+                </Button>
+                <Button onClick={() => setShowCredentialsModal(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
