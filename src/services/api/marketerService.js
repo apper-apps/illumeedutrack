@@ -6,7 +6,7 @@ const apperClient = new ApperClient({
 });
 
 const marketerService = {
-  async getAll() {
+async getAll() {
     try {
       const params = {
         fields: [
@@ -181,7 +181,7 @@ const marketerService = {
       console.error("Error deleting marketer:", error);
       throw error;
     }
-  }
+}
 };
 
 export default marketerService;

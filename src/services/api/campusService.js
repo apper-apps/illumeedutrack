@@ -1,3 +1,4 @@
+import React from "react";
 const { ApperClient } = window.ApperSDK;
 
 const apperClient = new ApperClient({
@@ -6,7 +7,9 @@ const apperClient = new ApperClient({
 });
 
 const campusService = {
-  async getAll() {
+
+const campusService = {
+async getAll() {
     try {
       const params = {
         fields: [
@@ -165,3 +168,4 @@ const campusService = {
 };
 
 export default campusService;
+};

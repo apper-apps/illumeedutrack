@@ -24,6 +24,12 @@ function AppContent() {
   const [isInitialized, setIsInitialized] = useState(false);
 
 useEffect(() => {
+    // Check if ApperSDK is available
+    if (!window.ApperSDK) {
+      console.error("ApperSDK not loaded");
+      return;
+    }
+
     const { ApperClient, ApperUI } = window.ApperSDK;
     
     const client = new ApperClient({

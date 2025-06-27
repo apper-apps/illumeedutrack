@@ -1,4 +1,4 @@
-import studentService from './studentService';
+import studentService from "@/services/api/studentService";
 
 const { ApperClient } = window.ApperSDK;
 
@@ -8,7 +8,7 @@ const apperClient = new ApperClient({
 });
 
 const analyticsService = {
-  async getMonthlyData() {
+async getMonthlyData() {
     try {
       const params = {
         fields: [
