@@ -1,0 +1,30 @@
+[
+  {
+    "Id": 1,
+    "name": "Global Education Partners",
+    "email": "contact@globaledu.com",
+    "phone": "+977-1-4567890",
+    "active": true
+  },
+  {
+    "Id": 2,
+    "name": "Study Abroad Consultancy",
+    "email": "info@studyabroad.com.np",
+    "phone": "+977-1-4567891",
+    "active": true
+  },
+  {
+    "Id": 3,
+    "name": "Dream Education Hub",
+    "email": "hello@dreamedu.com",
+    "phone": "+977-1-4567892",
+    "active": true
+  },
+  {
+    "Id": 4,
+    "name": "Future Learning Center",
+    "email": "support@futurelearn.np",
+    "phone": "+977-1-4567893",
+    "active": true
+  }
+]

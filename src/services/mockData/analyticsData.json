@@ -1,0 +1,30 @@
+[
+  {
+    "period": "2024-01",
+    "totalApplications": 45,
+    "offersIssued": 32,
+    "coeIssued": 28,
+    "totalCollection": 750000
+  },
+  {
+    "period": "2024-02",
+    "totalApplications": 52,
+    "offersIssued": 41,
+    "coeIssued": 35,
+    "totalCollection": 920000
+  },
+  {
+    "period": "2024-03",
+    "totalApplications": 38,
+    "offersIssued": 29,
+    "coeIssued": 24,
+    "totalCollection": 640000
+  },
+  {
+    "period": "2024-04",
+    "totalApplications": 61,
+    "offersIssued": 48,
+    "coeIssued": 42,
+    "totalCollection": 1150000
+  }
+]

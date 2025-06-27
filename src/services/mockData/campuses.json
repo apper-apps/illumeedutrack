@@ -1,0 +1,12 @@
+[
+  {
+    "Id": 1,
+    "name": "Kathmandu",
+    "location": "Central Region"
+  },
+  {
+    "Id": 2,
+    "name": "Chitwan",
+    "location": "Central Region"
+  }
+]
